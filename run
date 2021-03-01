@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH --job-name=snapStat
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-core=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mincpus=16
+#SBATCH --time=10:00:00
+#SBATCH --mem=360gb
+#SBATCH -p q64,q36
+
+#  srun python3 -u extractFeatures.py
+# #srun python3 -u mainSnapEval.py
+# #srun python3 -u mainPlanes.py
+srun python3 -u mainSnapEval_stats.py
