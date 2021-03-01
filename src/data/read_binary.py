@@ -8,6 +8,20 @@ Created on Tue Nov 10 08:16:00 2020
 
 
 def readDNSdata(inputfilename, onlyU=False):
+    """
+    Function used to read the raw field* files into python
+    :param inputfilename: The path to the field file
+    :param onlyU: True if only the U parameter is needed
+    :return:
+        -quantities - the different quantities as the rows
+        -quanList - A list over what the rows in quantities are
+        -xF - A array of location of the different meshpoints in the x direction
+        -yF - A array of location of the different meshpoint in the y direction. Variable stepsize
+        -zF - A array of location of the different meshpoint in the z direction
+        -length - [0]=z dim, [1]=y dim, [2]=time(s)
+        -storl - meshpoints of the domain in x,y,z
+        -paraString - String of different nice parameters
+    """
     def readFields(field):
         # print('Reading field: ' + str(field))
 
