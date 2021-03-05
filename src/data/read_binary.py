@@ -5,6 +5,8 @@ Created on Tue Nov 10 08:16:00 2020
 
 @author: au504946
 """
+from memory_profiler import profile
+from numba import jit
 
 
 def readDNSdata(inputfilename, onlyU=False):
@@ -38,6 +40,7 @@ def readDNSdata(inputfilename, onlyU=False):
 
         return rl, il
 
+    @jit
     def transformComplex(rl, il, ca, sa):
         hr = rl * ca - il * sa
         il = il * ca + rl * sa
