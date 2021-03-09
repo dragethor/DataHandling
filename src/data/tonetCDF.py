@@ -1,6 +1,6 @@
 
 
-from read_binary import readDNSdata
+from read_binary import *
 import os
 from dask.distributed import Client, as_completed, LocalCluster, get_task_stream
 import xarray as xr
