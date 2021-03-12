@@ -5,10 +5,11 @@ Created on Tue Nov 10 08:16:00 2020
 
 @author: au504946
 """
-from numba import jit
+
 
 
 def readDNSdata(inputfilename, onlyU=False):
+    from numba import jit
     """
     Function used to read the raw field* files into python
     :param inputfilename: The path to the field file
