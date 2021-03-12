@@ -45,8 +45,10 @@ def to_netcdf(file_path):
             "time": length[2],
         },
 
-    ).chunk(1000000)
+    )
     # Saving the files as netcdf files
-    print('saved'+file_path[-12:-1])
-    ds.to_netcdf(save_path + file_path[-12:-1] + 'nc')
+    # print('saved'+file_path[-12:-1])
+    # ds.to_netcdf(save_path + file_path[-12:-1] + 'nc', engine='netcdf4')
+
+    return ds , file_path[-12:-1]
 
