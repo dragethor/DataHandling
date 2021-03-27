@@ -35,35 +35,19 @@ def get_valdata(quantity):
         
      
     elif quantity=='pr1':
-        data.rename(columns={3: 'y+', 6:'t_mean', 9: 't_rms+', 12:'ut+' }, inplace=True)
-        Re = 14147
-        RMS_adi =  data['t_rms+'].to_numpy()
-        mean_adi = data['t_mean'].to_numpy()
+        data.rename(columns={3: 'pr1_y+', 6:'pr1_plusmean', 9: 'pr1_plusRMS', 12:'ut+' }, inplace=True)
+        data.drop(columns=['ut+'],inplace=True)
+   
+    elif quantity=='pr71':
+        data.rename(columns={3: 'pr0.71_y+', 6:'pr0.71_plusmean', 9: 'pr0.71_plusRMS', 12:'ut+' }, inplace=True)
+
         
-        data[quantity+'_plusmean']=mean_adi
-        data[quantity+'_plusRMS']=RMS_adi
-        data.drop(columns=['u_mean','uu+','ww+'],inplace=True)
+        data.drop(columns=['ut+'],inplace=True)
         
-    elif quantity=='pr0.71':
-        data.rename(columns={3: 'y+', 6:'t_mean', 9: 't_rms+', 12:'ut+' }, inplace=True)
-        Re = 14062
-        RMS_adi =  data['t_rms+'].to_numpy()
-        mean_adi = data['t_mean'].to_numpy()
-        
-        data[quantity+'_plusmean']=mean_adi
-        data[quantity+'_plusRMS']=RMS_adi
-        data.drop(columns=['u_mean','uu+','ww+'],inplace=True)
-        
-    elif quantity=='pr0.025':
-        data.rename(columns={3: 'y+', 6:'t_mean', 9: 't_rms+', 12:'ut+' }, inplace=True)
-        Re = 14147
-        RMS_adi =  data['t_rms+'].to_numpy()
-        mean_adi = data['t_mean'].to_numpy()
-        
-        data[quantity+'_plusmean']=mean_adi
-        data[quantity+'_plusRMS']=RMS_adi
-        data.drop(columns=['u_mean','uu+','ww+'],inplace=True)
-    
+    elif quantity=='pr0025':
+        data.rename(columns={3: 'pr0.025_y+', 6:'pr0.025_plusmean', 9: 'pr0.025_plusRMS', 12:'ut+' }, inplace=True)
+
+        data=data[['pr0.025_y+','pr0.025_plusmean','pr0.025_plusRMS']]
     if quantity=='uTexa':
         data.rename(columns={3: 'y', 6:'y+', 9: 'u_mean', 12:'ut+' }, inplace=True)
         RMS_adi = np.zeros(len(data['y']))
