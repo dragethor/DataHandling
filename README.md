@@ -35,11 +35,7 @@ Project Organization
     ├── src                <- Source code for use in this project.
     │   ├── __init__.py    <- Makes src a Python module
     │   │
-    │   ├── data           <- Scripts to load or read data
-    │   │   └── make_dataset.py
-    │   ├── intermediate           <- Scripts to transform data from raw to intermediate
-    │   │   └── make_dataset.py
-    │   ├── processed           <- Scripts to turn intermediate data into modelling input
+    │   ├── data           <- Scripts to load,read,and transform raw data
     │   │   └── make_dataset.py
     │   ├── features       <- Scripts to turn raw data into features for modeling
     │   │   └── build_features.py
