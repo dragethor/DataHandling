@@ -16,10 +16,10 @@ def get_valdata(quantity):
     import numpy as np
     
     if quantity=='uTexa':
-        data = pd.read_csv('data/external/validation/'+quantity+'_valData.csv', sep=' ', skiprows=1, header=None)
+        data = pd.read_csv("/home/au643300/NOBACKUP/data/external/validation/"+quantity+'_valData.csv', sep=' ', skiprows=1, header=None)
         data = data.dropna(axis=1)
     else:
-        data = pd.read_csv('data/external/validation/'+quantity+'_valData.csv', sep=' ', skiprows=1, header=None)
+        data = pd.read_csv("/home/au643300/NOBACKUP/data/external/validation/"+quantity+'_valData.csv', sep=' ', skiprows=1, header=None)
         data = data.dropna(axis=1)
         data = data.drop(columns=[0])
         
