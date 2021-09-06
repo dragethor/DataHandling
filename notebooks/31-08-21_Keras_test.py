@@ -7,6 +7,7 @@ from operator import ne
 from dask_jobqueue import SLURMCluster
 from dask.distributed import Client, as_completed,wait,fire_and_forget, LocalCluster
 import glob
+from tensorflow.python.util.nest import flatten
 import xarray as xr
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -25,6 +26,8 @@ from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as pl
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
+AUTOTUNE = tf.data.experimental.AUTOTUNE
+
 #%%
 
 sns.set_theme()
@@ -42,15 +45,15 @@ u_tau = Re_Tau*nu #The friction velocity
 #y_plus=(y*utau/nu)
 
 #Renaming the y value to y+
-source=source.assign_coords(y=(source.y*u_tau/nu))
-source=source.rename({'y':'y_plus'})
+#source=source.assign_coords(y=(source.y*u_tau/nu))
+#source=source.rename({'y':'y_plus'})
 
 
 #%%
 
 cluster=SLURMCluster(cores=8,
                      memory="50GB",
-                     queue='q36',
+                     queue='q64',
                      walltime='0-00:30:00',
                      local_directory='/scratch/$SLURM_JOB_ID',
                      interface='ib0',
@@ -68,15 +71,29 @@ cluster.adapt(minimum_jobs=0,maximum_jobs=4)
 
 #%%
 
-#Taking out a single y+ value at y+=20
-traning=source.sel(y_plus=20, method="nearest")
+
+#TODO få ryddet op i alt mit data cleaning stuff. Evt i en function?
+#TODO Mangler også at få tau_wall ud som results tror jeg
+
+#Taking out a single y+ value at y+=15
+traning=source.assign_coords(y=(source.y*u_tau/nu))
+traning=traning.rename({'y':'y_plus'})
+traning=traning.sel(y_plus=15, method="nearest")
+
+
+
 
 #The vertification data
-results=source.isel(y_plus=-2)
+results=source['u_vel'].differentiate('y')
+results=results.assign_coords(y=(results.y*u_tau/nu))
+results=results.rename({'y':'y_plus'})
+results=results.isel(y_plus=-1)
 
 
 
 #%%
+
+
 
 traning_u=traning['u_vel']
 results_u=results['u_vel']
@@ -85,20 +102,20 @@ results_u=results['u_vel']
 traning_u=traning_u.compute()
 results_u=results_u.compute()
 
+#%%
 
 
 traning_un=traning_u.data
 results_un=results_u.data
 
 traning_un=np.expand_dims(traning_un,0)
-traning_un=np.swapaxes(traning_un,0,1)
-traning_un=np.moveaxis(traning_un,1,-1)
+traning_un=np.moveaxis(traning_un,0,-1)
 
 
 
 results_un=np.expand_dims(results_un,0)
-results_un=np.swapaxes(results_un,0,1)
-results_un=np.moveaxis(results_un,1,-1)
+results_un=np.moveaxis(results_un,0,-1)
+
 
 
 #Så nu har jeg alt min data på numpy form. Konveterer det til tensorflow tensor
@@ -109,8 +126,16 @@ results_un=np.moveaxis(results_un,1,-1)
 #%%
 
 tensor=tf.data.Dataset.from_tensor_slices((traning_un,results_un))
+BS=10
 
-tensor=tensor.shuffle(10)
+tensor = (tensor
+	.shuffle(20)
+	.cache()
+	.repeat()
+	.batch(BS)
+	.prefetch(AUTOTUNE)
+)
+
 
 #%%
 #Splitting data into test,val, train
@@ -143,10 +168,9 @@ pool_size=2
 
 model = keras.models.Sequential([
     layers.BatchNormalization(-1,input_shape=(256,256,1)),
-    layers.Conv2D(num_filters,filter_size),
+    layers.Conv2D(num_filters,filter_size,activation='relu'),
     layers.MaxPooling2D(pool_size=pool_size),
-    layers.Flatten(),
-    layers.Dense(256,activation='relu')
+    layers.Flatten()
 ])
 
 
@@ -166,13 +190,12 @@ model.compile(
   metrics=['mse'],
 )
 
-#%%
 
+
+#%%
 a=list(train.as_numpy_iterator())[0][0]
 
-
 #%%
-
 
 model.fit(
     x=train,
@@ -180,3 +203,7 @@ model.fit(
     validation_data=val,
     use_multiprocessing=True
 )
+
+#%%
+
+b=model.predict(a)
