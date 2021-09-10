@@ -80,6 +80,7 @@ target/
 
 # exclude data from source control by default
 /data/
+*.zarr
 
 # Mac OS-specific storage files
 .DS_Store

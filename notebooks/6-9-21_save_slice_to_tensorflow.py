@@ -19,6 +19,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from sklearn.datasets import load_boston
 import tensorflow as tf
+import tensorflow.train as tft
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as pl
@@ -46,94 +47,61 @@ cluster=SLURMCluster(cores=8,
 
 #%%
 client=Client(cluster)
-cluster.adapt(minimum_jobs=0,maximum_jobs=4)
-
-
-
+cluster.adapt(minimum_jobs=0,maximum_jobs=6)
 
 
 #%%
 
-y_plus=15
+#Making a load function
 
 
-Re_Tau = 395 #Direct from simulation
-Re = 10400 #Direct from simulation
-nu = 1/Re #Kinematic viscosity
-u_tau = Re_Tau*nu
-
-#converts between y_plus and y
-y_func= lambda y_plus : y_plus*nu/u_tau
-
-
-slice=slice.assign(tau_wall=slice['u_vel'].differentiate('y').isel(y=-1))
-slice=source.sel(y=y_func(15), method="nearest")
-
-
-
-
-
-
-#results=source=source.differentiate('y')
-#results=results.isel(y=-1)
-
-#Så først tages der her og slices sådan at man kun har de y_værdier man vil have, og derudover også tau ved y=-1
-
-
-#%%
-slice=slice.compute()
-
-
-
-#%%
-#Test hvor jeg kun gemmer u og tau
-
-
-#TODO Mangler noget her. Fra https://www.tensorflow.org/api_docs/python/tf/io/serialize_tensor ved "Serialize the data using"
-
-def serialize(u_vel,tau_wall):
-      feature = {
-      'u_vel': tf.io.serialize_tensor(u_vel),
-      'tau_wall': tf.io.serialize_tensor(tau_wall),
+def read_tfrecords(serial_data):
+      format = {
+      "u_vel": tf.io.FixedLenFeature([], tf.string, default_value=""),
+      "tau_wall": tf.io.FixedLenFeature([], tf.string, default_value="")
       }
-      serialized=tf.train.Example.Features(feature=feature)
-      return serialized
 
+      features=tf.io.parse_single_example(serial_data, format)
 
-u_vel=slice['u_vel'].data
-tau_wall=slice['tau_w'].data
-
-with tf.io.TFRecordWriter(filename) as writer:
-      for i in range(len(slice.time)):
-            test=serialize(u_vel,tau_wall)
-            writer.write(test)
+      u_vel=tf.io.parse_tensor(features['u_vel'],tf.float64)
+      tau_wall=tf.io.parse_tensor(features['tau_wall'],tf.float64)
+      return (u_vel, tau_wall)
 
 
 
 
+data_loc="/home/au643300/DataHandling/data/processed/y_plus_15"
+
+dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP')
+dataset=dataset.range(10).batch(20).shuffle(buffer_size=100).map(read_tfrecords)
 
 
-# %%
-#Det der kommer til at ske er at jeg udtrækker ved et antal y+ værdier og gemmer dem som tfrecords
+#NU ER ALT FUCKING KLART TIL AT LOADE IN I FUCKING TENSORFLOW
+#Evt samle det hele som på side 410 i bogen?
 
 
 
+#%%
 
-
-
-feature = {
-      'u_vel': _int64_feature(image_shape[0]),
-      'v_vel': _int64_feature(image_shape[1]),
-      'w_vel': _int64_feature(image_shape[2]),
-      'tau_wall': _int64_feature(label),
-      'pr0.025': _bytes_feature(image_string),
-      'pr0.2': _bytes_feature(image_string),
-      'pr0.71': _bytes_feature(image_string),
-      'pr0.1': _bytes_feature(image_string),
-      'y_plus' aaa,
+for serialized_example in dataset:
+      parsed_example = tf.io.parse_example(serialized_example,format)
 
 
 
 
-def slices_to_records(y_plus,):
+
+
+
+#Trying to get the file out again
+#%%
+
+
+
+
+
+
+
+
+#%%
+
 
