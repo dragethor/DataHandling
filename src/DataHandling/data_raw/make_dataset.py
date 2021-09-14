@@ -328,6 +328,3 @@ def readDNSdata(inputfilename, onlyU=False):
     return quantities, quanList, xF, yF, zF, length, storl, paraString
 
 
-
-
-append_tozarr()
