@@ -56,6 +56,14 @@ cluster.adapt(minimum_jobs=0,maximum_jobs=6)
 
 
 def read_tfrecords(serial_data):
+      """[reads tfrecords and unserializeses them]
+
+      Args:
+          serial_data ([TFrecord]): [Tfrecord that needs to be unserialzed]
+
+      Returns:
+          [tuple]: [A tuple of u_vel and tau_wall]
+      """
       format = {
       "u_vel": tf.io.FixedLenFeature([], tf.string, default_value=""),
       "tau_wall": tf.io.FixedLenFeature([], tf.string, default_value="")
