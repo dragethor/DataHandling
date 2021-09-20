@@ -8,6 +8,8 @@ def read_tfrecords(serial_data):
       Returns:
           (u_vel,tau_wall) (tuple): A tuple of u_vel and tau_wall
       """
+      import tensorflow as tf
+      
       format = {
       "u_vel": tf.io.FixedLenFeature([], tf.string, default_value=""),
       "tau_wall": tf.io.FixedLenFeature([], tf.string, default_value="")
@@ -21,8 +23,49 @@ def read_tfrecords(serial_data):
       return (u_vel, tau_wall)
 
 
-def load():
+def load(data_loc,repeat=10,shuffle_size=100,batch_s=5):
+      """A function that loads in a TFRecord from a saved location
+
+      Args:
+          data_loc (string): The TFRecords location
+          repeat (int): How many repeats of the data
+          shuffle_size (int): How big a shuffle cache should be
+          batch_s (int): Size of each batch
+
+      Returns:
+          datase: tuple of the data 
+      """
       #Her skal jeg implmntere det sidste så jeg faktisk får et dataset ud
+      import tensorflow as tf
+      
+      
+      dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP')
+      
+      len_data=len(list(dataset))
+      
+      dataset=dataset.map(read_tfrecords)
+      dataset=dataset.repeat(repeat)
+      dataset=dataset.shuffle(buffer_size=shuffle_size)
+      
+      train_size = 20
+      valid_size = 30
+      test_size = 50
+
+      train = dataset.take(train_size)
+      remaining = dataset.skip(train_size)
+      valid = remaining.take(valid_size)
+      test = remaining.skip(valid_size)
+
+      
+      dataset_test=
+
+
+      dataset=dataset.batch(batch_size=batch_s,num_parallel_calls=tf.data.AUTOTUNE)
+      return dataset
+
+
+
+
 
 
 
@@ -112,13 +155,19 @@ def save(y_plus,data="/home/au643300/NOBACKUP/data/interim/data.zarr/"):
 
       save_loc="/home/au643300/DataHandling/data/processed"+"/y_plus_"+str(y_plus)
 
+      #shuffle and save
+  
+
+
+
       options = tf.io.TFRecordOptions(compression_type="GZIP")
       with tf.io.TFRecordWriter(save_loc,options) as writer:
             for i in range(u_vel.shape[0]):
                   test=serialize(u_vel[i,:,:],tau_wall[i,:,:])
                   writer.write(test)
     
-    return None
+      
+      return None
 
 
 

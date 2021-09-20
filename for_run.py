@@ -1,7 +1,7 @@
 
 
 
-from DataHandling.data_raw.make_dataset import append_tozarr
+from DataHandling.data_raw.make_dataset import netcdf_save
 
 
-a=append_tozarr()
+a=netcdf_save()

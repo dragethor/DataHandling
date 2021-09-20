@@ -1,44 +1,50 @@
 
 
+def netcdf_save(interim="/home/au643300/NOBACKUP/data/interim/snapshots/"):
+    """Saves .u files to netcdf files
 
-def append_tozarr(store="/home/au643300/NOBACKUP/data.zarr"):
-    """
-    appends or makes a completly new zarr with all timesteps found in the folder raw.
-    :param store: Location to store the zarr folder:
-    :return: nothing. only saves the file
+    Args:
+        interim (str, optional): the default save location. Defaults to "/home/au643300/NOBACKUP/data/interim/snapshots/".
     """
 
     import glob
+    from hashlib import new
     import os
     import numpy as np
     import xarray as xr
 
     raw = "/home/au643300/DataHandling/data/raw/"
 
-    files = glob.glob(raw + '*.u')
-    files = sorted(files)
-    file_names = [os.path.basename(path) for path in files]
-    file_names = [file[0:-2] for file in file_names]
+    #%%
+    raw_files = glob.glob(raw + '*.u')
+    raw_files = sorted(raw_files)
+    raw_files_names = [os.path.basename(path) for path in raw_files]
+    raw_files_names = [file[0:-2] for file in raw_files_names]
 
-    if not os.path.exists(store):
-        data = to_xarr(files[0])
-        data.attrs['field'] = files[0][-6:-2]
-        data.to_zarr(store, compute=True)
+    #raw_files_index=[file[6:] for file in raw_files_names]
+    #raw_files_index=np.array(raw_files_index)
+    #%%
+
+
+
+    #files in interim snapshots folder
+
+    inter_files = glob.glob(interim + '*.nc')
+    inter_files = sorted(inter_files)
+    inter_files_names = [os.path.basename(path) for path in inter_files]
+    inter_files_names = [file[0:-3] for file in inter_files_names]
+
+    #now remove all that are allready in the save folder
+
+    new_files=[x for x in raw_files_names if x not in inter_files_names]
+
+
+    for name in new_files:
+        data=to_xarr(raw+name+".u")
+        data.to_netcdf(interim + name + '.nc', engine='netcdf4')
+        print("saved "+name,flush=True)
         del data
 
-    ex = xr.open_zarr(store)
-    field = 'field.' + ex.attrs['field']
-
-    # Finds where to start appending the new files
-    start = [field == file for file in file_names]
-    index = int(np.where(start)[0])
-    index += 1
-
-    for file in files[index:]:
-        data = to_xarr(file)
-        data.attrs['field'] = file[-6:-2]
-        data.to_zarr(store, append_dim="time", compute=True)
-        del data
 
     return None
 
@@ -85,6 +91,9 @@ def to_xarr(file_path):
     ds = ds.expand_dims("time")
     ds = ds.chunk(10000)
     return ds
+
+
+
 
 
 def readDNSdata(inputfilename, onlyU=False):
