@@ -21,7 +21,7 @@ import tensorflow.train as tft
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
-data="/home/au643300/NOBACKUP/data/interim/data.zarr/"
+data="/home/au643300/DataHandling/data/interim/data.zarr"
 y_plus=15
 
 def custom_optimize(dsk, keys):
@@ -52,7 +52,8 @@ def serialize(u_vel,tau_wall):
     proto=tft.Example(features=tf.train.Features(feature=features_dict))
     return proto.SerializeToString()
 
-
+client=Client(cluster)
+cluster.adapt(minimum_jobs=0,maximum_jobs=5)
 
 Re_Tau = 395 #Direct from simulation
 Re = 10400 #Direct from simulation
@@ -62,28 +63,26 @@ u_tau = Re_Tau*nu
 #converts between y_plus and y
 y_func= lambda y_plus : y_plus*nu/u_tau
 
+
+#%%
 #Opening up the full dataset
 source=xr.open_zarr(data)
 
 slice=source
 slice=slice.assign(tau_wall=slice['u_vel'].differentiate('y').isel(y=-1))
-slice=slice.sel(y=y_func(15), method="nearest")
+slice=slice.sel(y=y_func(y_plus), method="nearest")
 
 #%%
 #For now only u and tau are saved
 
-client=Client(cluster)
-cluster.adapt(minimum_jobs=0,maximum_jobs=5)
-
 
 
 #with dask.config.set(array_optimize=custom_optimize):
-u_vel=dask.optimize(slice['u_vel'])[0]
-tau_wall=dask.optimize(slice['tau_wall'])[0]
+u_vel=slice['u_vel']
+tau_wall=slice['tau_wall']
 results=[u_vel,tau_wall]
 results=dask.optimize(results)[0]
 results=dask.compute(*results)
-
 u_vel=results[0].values
 tau_wall=results[1].values
 
@@ -116,24 +115,22 @@ np.random.shuffle(train)
 save_loc="/home/au643300/DataHandling/data/processed"+"/y_plus_"+str(y_plus)
 
 
-#TODO ændret test navnet her så det hele ikke fucker op
-
 options = tf.io.TFRecordOptions(compression_type="GZIP")
 with tf.io.TFRecordWriter(save_loc+"_train",options) as writer:
     for i in train:
-            test=serialize(u_vel[i,:,:],tau_wall[i,:,:])
-            writer.write(test)
+            write_d=serialize(u_vel[i,:,:],tau_wall[i,:,:])
+            writer.write(write_d)
     writer.close()
 
 
 with tf.io.TFRecordWriter(save_loc+"_test",options) as writer:
     for i in test:
-            test=serialize(u_vel[i,:,:],tau_wall[i,:,:])
-            writer.write(test)
+            write_d=serialize(u_vel[i,:,:],tau_wall[i,:,:])
+            writer.write(write_d)
     writer.close()
 
 with tf.io.TFRecordWriter(save_loc+"_validation",options) as writer:
     for i in validation:
-            test=serialize(u_vel[i,:,:],tau_wall[i,:,:])
-            writer.write(test)
+            write_d=serialize(u_vel[i,:,:],tau_wall[i,:,:])
+            writer.write(write_d)
     writer.close()

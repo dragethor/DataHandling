@@ -18,10 +18,7 @@ import zarr
 import time
 from tensorflow import keras
 from tensorflow.keras import layers
-from sklearn.datasets import load_boston
 import tensorflow as tf
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as pl
 import wandb
 from wandb.keras import WandbCallback
@@ -31,15 +28,15 @@ from DataHandling.features.slices import load
 #%%
 
 
-dataset=load("/home/au643300/DataHandling/data/processed/y_plus_15")
+test=load('/home/au643300/DataHandling/data/processed/y_plus_15_test')
 
+train=load('/home/au643300/DataHandling/data/processed/y_plus_15_test')
 
-
-
+validation=load('/home/au643300/DataHandling/data/processed/y_plus_15_test')
 
 #%%
 
-wandb.init(project="CNN_Guastoni")
+wandb.init(project="CNN_Guastoni",group='...')
 
 #Trying to make the model with keras functional api
 
@@ -65,5 +62,19 @@ model = keras.Model(inputs=input, outputs=output, name="CNN_Guastoni")
 model.summary()
 
 
+model.compile(loss="mean_squared_error", optimizer="Adam")
 
 
+#%%
+backup='/home/au643300/DataHandling/models/backup/'
+
+str_time=time.strftime("%d%m%Y-%H")
+backup_dir = os.path.join(backup, str_time)
+
+backup_cb=tf.keras.callbacks.experimental.BackupAndRestore(backup_dir)
+early_stopping_cb = keras.callbacks.EarlyStopping(patience=10,
+restore_best_weights=True)
+model.fit(x=test,epochs=2,steps_per_epoch=10,use_multiprocessing=True,validation_data=validation,validation_steps=10,callbacks=[WandbCallback(),early_stopping_cb,backup_cb])
+
+# %%
+tf.config.list_physical_devices('GPU')

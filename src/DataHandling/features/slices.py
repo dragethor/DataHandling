@@ -23,7 +23,7 @@ def read_tfrecords(serial_data):
       return (u_vel, tau_wall)
 
 
-def load(data_loc,repeat=10,shuffle_size=100,batch_s=5):
+def load(data_loc,repeat=10,shuffle_size=100,batch_s=10):
       """A function that loads in a TFRecord from a saved location
 
       Args:
@@ -47,21 +47,10 @@ def load(data_loc,repeat=10,shuffle_size=100,batch_s=5):
       dataset=dataset.repeat(repeat)
       dataset=dataset.shuffle(buffer_size=shuffle_size)
       
-      train_size = 20
-      valid_size = 30
-      test_size = 50
-
-      train = dataset.take(train_size)
-      remaining = dataset.skip(train_size)
-      valid = remaining.take(valid_size)
-      test = remaining.skip(valid_size)
-
-      
-      dataset_test=
 
 
-      dataset=dataset.batch(batch_size=batch_s,num_parallel_calls=tf.data.AUTOTUNE)
-      return dataset
+      dataset=dataset.batch(batch_size=batch_s)
+      return dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
 
 
@@ -145,26 +134,59 @@ def save(y_plus,data="/home/au643300/NOBACKUP/data/interim/data.zarr/"):
 
       
 
-      with dask.config.set(array_optimize=custom_optimize):
-            u_vel=dask.optimize(slice['u_vel'])[0]
-            tau_wall=dask.optimize(slice['tau_wall'])[0]
-            results=[u_vel,tau_wall]
-            results=dask.optimize(results)[0]
-            dask.compute(*results)
+      u_vel=slice['u_vel']
+      tau_wall=slice['tau_wall']
+      results=[u_vel,tau_wall]
+      results=dask.optimize(results)[0]
+      results=dask.compute(*results)
+      u_vel=results[0].values
+      tau_wall=results[1].values
       
 
       save_loc="/home/au643300/DataHandling/data/processed"+"/y_plus_"+str(y_plus)
 
-      #shuffle and save
+      #shuffle the data, split into 3 parts and save and save
   
+      test_split=0.1
+      validation_split=0.2
+
+
+
+      num_snapshots=u_vel.shape[0]
+
+      train=np.arange(0,num_snapshots)
+
+
+      validation=np.random.choice(train,size=int(num_snapshots*validation_split),replace=False)
+      train=np.setdiff1d(train,validation)
+
+      test=np.random.choice(train,size=int(num_snapshots*test_split),replace=False)
+      train=np.setdiff1d(train,test)
+
+
+      np.random.shuffle(train)
 
 
 
       options = tf.io.TFRecordOptions(compression_type="GZIP")
-      with tf.io.TFRecordWriter(save_loc,options) as writer:
-            for i in range(u_vel.shape[0]):
-                  test=serialize(u_vel[i,:,:],tau_wall[i,:,:])
-                  writer.write(test)
+      with tf.io.TFRecordWriter(save_loc+"_train",options) as writer:
+            for i in train:
+                        write_d=serialize(u_vel[i,:,:],tau_wall[i,:,:])
+                        writer.write(write_d)
+            writer.close()
+
+
+      with tf.io.TFRecordWriter(save_loc+"_test",options) as writer:
+            for i in test:
+                        write_d=serialize(u_vel[i,:,:],tau_wall[i,:,:])
+                        writer.write(write_d)
+            writer.close()
+
+      with tf.io.TFRecordWriter(save_loc+"_validation",options) as writer:
+            for i in validation:
+                        write_d=serialize(u_vel[i,:,:],tau_wall[i,:,:])
+                        writer.write(write_d)
+            writer.close()
     
       
       return None

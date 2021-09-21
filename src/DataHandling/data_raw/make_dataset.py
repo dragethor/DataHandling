@@ -1,5 +1,48 @@
 
 
+def append_tozarr(store="/home/au643300/DataHandling/data/interim/data.zarr"):
+    import glob
+    import os
+    import numpy as np
+    import xarray as xr
+
+    raw = "/home/au643300/DataHandling/data/raw/"
+
+    files = glob.glob(raw + '*.u')
+    files = sorted(files)
+    file_names = [os.path.basename(path) for path in files]
+    file_names = [file[0:-2] for file in file_names]
+
+    #%%
+
+    if not os.path.exists(store):
+        data = to_xarr(files[0])
+        data.attrs['field'] = [file_names[0]]
+        data.to_zarr(store, compute=True)
+        print("saved "+file_names[0],flush=True)
+        del data
+
+    ex = xr.open_zarr(store)
+    field = ex.attrs['field']
+
+    # Finds where to start appending the new files
+
+    files_clean = [x for x in files if field[-1] not in x]
+
+    if len(files_clean)>0:
+        for file in files_clean:
+            data = to_xarr(file)
+            field.append(file[-12:-2])
+            data.attrs['field'] = field
+            data.to_zarr(store, append_dim="time", compute=True)
+            print("saved "+file[-12:-2],flush=True)
+            del data
+    else:
+        print("no files to save")
+    
+    return None
+
+
 def netcdf_save(interim="/home/au643300/NOBACKUP/data/interim/snapshots/"):
     """Saves .u files to netcdf files
 
