@@ -3,6 +3,7 @@
 #%%
 import os
 from operator import ne
+import re
 from dask_jobqueue import SLURMCluster
 from dask.distributed import Client, as_completed,wait,fire_and_forget, LocalCluster
 import glob
@@ -28,11 +29,11 @@ from DataHandling.features.slices import load
 #%%
 
 
-test=load('/home/au643300/DataHandling/data/processed/y_plus_15_test')
+test=load('/home/au643300/DataHandling/data/processed/y_plus_15_test',repeat=(2))
 
-train=load('/home/au643300/DataHandling/data/processed/y_plus_15_test')
+train=load('/home/au643300/DataHandling/data/processed/y_plus_15_test',repeat=(2))
 
-validation=load('/home/au643300/DataHandling/data/processed/y_plus_15_test')
+validation=load('/home/au643300/DataHandling/data/processed/y_plus_15_test',repeat=(2))
 
 #%%
 
@@ -56,6 +57,7 @@ batch4=keras.layers.BatchNormalization(-1)(cnn4)
 cnn5=keras.layers.Conv2D(128,3,activation='relu')(batch4)
 output=tf.keras.layers.Conv2DTranspose(1,13)(cnn5)
 #Evt kigge på at gøre billedet 128x128 og så upsamle det med depth to space?
+#TODO kigget på at lave den her med fully connected til sidst?
 
 model = keras.Model(inputs=input, outputs=output, name="CNN_Guastoni")
 
@@ -68,13 +70,18 @@ model.compile(loss="mean_squared_error", optimizer="Adam")
 #%%
 backup='/home/au643300/DataHandling/models/backup/'
 
-str_time=time.strftime("%d%m%Y-%H")
+str_time=time.strftime("%d-%m-%Y_%H%M")
 backup_dir = os.path.join(backup, str_time)
 
 backup_cb=tf.keras.callbacks.experimental.BackupAndRestore(backup_dir)
-early_stopping_cb = keras.callbacks.EarlyStopping(patience=10,
+early_stopping_cb = keras.callbacks.EarlyStopping(patience=50,
 restore_best_weights=True)
-model.fit(x=test,epochs=2,steps_per_epoch=10,use_multiprocessing=True,validation_data=validation,validation_steps=10,callbacks=[WandbCallback(),early_stopping_cb,backup_cb])
+model.fit(x=test,epochs=300,validation_data=validation,callbacks=[WandbCallback(),early_stopping_cb,backup_cb])
+
+
 
 # %%
-tf.config.list_physical_devices('GPU')
+
+
+
+model.save("/home/au643300/DataHandling/models/trained/CNN_like_gustanoi_Conv2DTranspose.h5")
