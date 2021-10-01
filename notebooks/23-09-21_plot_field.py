@@ -24,7 +24,7 @@ import wandb
 from wandb.keras import WandbCallback
 from DataHandling.features.slices import load
 import seaborn as sns
-#%%
+
 
 data=xr.open_zarr('/home/au643300/DataHandling/data/interim/data.zarr')
 

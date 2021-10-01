@@ -1,61 +1,54 @@
 
 #%%
-def to_xarr(file_path):
-    """
-    takes a raw *.u file and loads its into xarr
-    :param file_path: the filename of the file there is to be converted to netCDF
-    :return:
-    """
-
-    import xarray as xr
-    from DataHandling.data_raw.make_dataset import readDNSdata
-    # Sorting the list of files in the raw_path dir
-
-    # Here a complete list of the raw file path incl the file name is made
-
-    quantities, _, xf, yf, zf, length, _, _ = readDNSdata(file_path)
-    # As the files are completed they are saved as a xarray dataset
-
-    xf = xf[:-1]
-    zf = zf[:-1]
-    ds = xr.Dataset(
-        {
-            "u_vel": (['x', 'y', 'z'], quantities[0]),
-            "v_vel": (['x', 'y', 'z'], quantities[1]),
-            "w_vel": (['x', 'y', 'z'], quantities[2]),
-            "pr1": (['x', 'y', 'z'], quantities[3]),
-            "pr0.71": (['x', 'y', 'z'], quantities[4]),
-            "pr0.2": (['x', 'y', 'z'], quantities[5]),
-            "pr0.025": (['x', 'y', 'z'], quantities[6]),
-        },
-        coords={
-            "x": (["x"], xf),
-            "y": (["y"], yf),
-            "z": (["z"], zf),
-            "time": length[2],
-        },
-
-    )
-    # Saving the files as netcdf files
-    # print('saved'+file_path[-12:-1])
-    # ds.to_netcdf(save_path + file_path[-12:-1] + 'nc', engine='netcdf4')
-    ds = ds.expand_dims("time")
-    ds = ds.chunk(10000)
-    return ds
-
-
-
-
-
-
 store="/home/au643300/DataHandling/data/interim/data.zarr"
-"""
-appends or makes a completly new zarr with all timesteps found in the folder raw.
-:param store: Location to store the zarr folder:
-:return: nothing. only saves the file
-"""
+import glob
+from hashlib import new
+import os
+import numpy as np
+import xarray as xr
+
+raw = "/home/au643300/DataHandling/data/raw/"
+
+files = glob.glob(raw + '*.u')
+files = sorted(files)
+file_names = [os.path.basename(path) for path in files]
+file_names = [file[0:-2] for file in file_names]
 
 
+
+if not os.path.exists(store):
+    data = to_xarr(files[0])
+    data.attrs['field'] = [file_names[0]]
+    data.to_zarr(store, compute=True)
+    print("saved "+file_names[0],flush=True)
+    del data
+
+ex = xr.open_zarr(store)
+field = ex.attrs['field']
+
+
+
+# Finds where to start appending the new files
+
+new_files=set(file_names).difference(field)
+new_files=list(new_files)
+new_files=sorted(new_files)
+
+
+
+#%%
+
+if len(new_files)>0:
+    for file_name in new_files:
+        path=glob.glob(raw + file_name+'*')[0]
+        data = to_xarr(path)
+        field.append(file_name)
+        data.attrs['field'] = field
+        #data.to_zarr(store, append_dim="time", compute=True)
+        print("saved "+file_name,flush=True)
+        del data
+else:
+    print("no files to save",flush=True)
 
 
 

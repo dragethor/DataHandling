@@ -28,6 +28,13 @@ from DataHandling.features.slices import load
 
 #%%
 
+root_logdir = os.path.join('/home/au643300/DataHandling/models', "my_logs")
+
+def get_run_logdir():
+    run_id = time.strftime("run_%Y_%m_%d-%H_%M_%S")
+    return os.path.join(root_logdir, run_id)
+
+run_logdir = get_run_logdir() # e.g., './my_logs/run_2019_06_07-15_15_22
 
 test=load('/home/au643300/DataHandling/data/processed/y_plus_15_test',repeat=(10))
 
@@ -77,15 +84,11 @@ backup='/home/au643300/DataHandling/models/backup/'
 str_time=time.strftime("%d-%m-%Y_%H%M")
 backup_dir = os.path.join(backup, str_time)
 
-backup_cb=tf.keras.callbacks.experimental.BackupAndRestore(backup_dir)
+#TODO move data to scratch first?
+tensorboard_cb = keras.callbacks.TensorBoard(run_logdir)
+backup_cb=tf.keras.callbacks.ModelCheckpoint(backup_dir,save_best_only=True)
 early_stopping_cb = keras.callbacks.EarlyStopping(patience=200,
 restore_best_weights=True)
-model.fit(x=test,epochs=300,validation_data=validation,callbacks=[WandbCallback(),early_stopping_cb,backup_cb])
+model.fit(x=test,epochs=100000,validation_data=validation,callbacks=[WandbCallback(),early_stopping_cb,backup_cb,tensorboard_cb])
 
 
-
-# %%
-
-
-
-model.save("/home/au643300/DataHandling/models/trained/CNN_like_gustanoi_Conv2DTranspose.h5")

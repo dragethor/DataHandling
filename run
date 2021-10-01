@@ -10,5 +10,6 @@
 #  srun python3 -u extractFeatures.py
 # #srun python3 -u mainSnapEval.py
 # #srun python3 -u mainPlanes.py
-#srun python3 -u mainSnapEval_stats.py
+# #srun python3 -u mainSnapEval_stats.py
 srun python3 -u for_run.py
+# ¤srun python3 -u update_records.py
