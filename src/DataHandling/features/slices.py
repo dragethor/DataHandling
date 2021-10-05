@@ -1,4 +1,24 @@
 
+
+
+from zarr import util
+
+
+def load_from_scratch():
+      import os
+      scratch=os.path.join('/scratch/', os.environ['SLURM_JOB_ID'])
+      data_loc='/home/au643300/DataHandling/data/processed/y_plus_15_test'
+
+
+
+
+
+
+
+
+
+
+
 def read_tfrecords(serial_data):
       """reads tfrecords from file and unserializeses them
 
@@ -23,37 +43,51 @@ def read_tfrecords(serial_data):
       return (u_vel, tau_wall)
 
 
-def load(data_loc,repeat=10,shuffle_size=100,batch_s=10):
+def load_from_scratch(y_plus,repeat=10,shuffle_size=100,batch_s=10):
       """A function that loads in a TFRecord from a saved location
 
       Args:
-          data_loc (string): The TFRecords location
+          y_plus (int): The y plus value 
           repeat (int): How many repeats of the data
           shuffle_size (int): How big a shuffle cache should be
           batch_s (int): Size of each batch
 
       Returns:
-          datase: tuple of the data 
+          data: data[0]=test, data[1]=train, data[2]=validation 
       """
-      #Her skal jeg implmntere det sidste så jeg faktisk får et dataset ud
+      
       import tensorflow as tf
+      import os
+      import shutil
+
+      save_loc=os.path.join("/home/au643300/DataHandling/data/processed",*('y_plus_'+str(y_plus)))
+
+      if not os.path.exists(save_loc):
+            print("data does not exist. Making new",flush=True)
+            a=save(y_plus)
+            del a
       
       
-      dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP')
       
-      len_data=len(list(dataset))
-      
-      dataset=dataset.map(read_tfrecords)
-      dataset=dataset.repeat(repeat)
-      dataset=dataset.shuffle(buffer_size=shuffle_size)
+      #copying the data to scratch
+      scratch=os.path.join('/scratch/', os.environ['SLURM_JOB_ID'])
+      shutil.copytree(save_loc,scratch)
       
 
 
-      dataset=dataset.batch(batch_size=batch_s)
-      return dataset.prefetch(tf.data.experimental.AUTOTUNE)
+      splits=['test','train','validation']
 
-
-
+      data=[]
+      for name in splits:
+            data_loc=os.path.join(save_loc,name)
+            dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP')
+            dataset=dataset.map(read_tfrecords)
+            dataset=dataset.shuffle(buffer_size=shuffle_size)
+            dataset=dataset.repeat(repeat)
+            dataset=dataset.batch(batch_size=batch_s)
+            dataset.prefetch(tf.data.experimental.AUTOTUNE)
+            data=data.append(dataset)
+      return data[0],data[1],data[2]
 
 
 
@@ -78,38 +112,26 @@ def save(y_plus,data="/home/au643300/NOBACKUP/data/interim/data.zarr/"):
       import zarr
       import time
       import tensorflow as tf
-      import tensorflow.train as tft
-      os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+      from DataHandling import utiliy
 
       def custom_optimize(dsk, keys):
             dsk = dask.optimization.inline(dsk, inline_constants=True)
             return dask.array.optimization.optimize(dsk, keys)
 
 
-      cluster=SLURMCluster(cores=8,
-                        memory="50GB",
-                        queue='q64',
-                        walltime='0-01:00:00',
-                        local_directory='/scratch/$SLURM_JOB_ID',
-                        interface='ib0',
-                        scheduler_options={'interface':'ib0'},
-                        extra=["--lifetime", "50m"]
-                        )
-
-
       def serialize(u_vel,tau_wall):
-            u_vel_fea=tft.Feature(bytes_list=tft.BytesList(value=[tf.io.serialize_tensor(tf.convert_to_tensor(u_vel)).numpy()]))
-            tau_wall_fea=tft.Feature(bytes_list=tft.BytesList(value=[tf.io.serialize_tensor(tf.convert_to_tensor(tau_wall)).numpy()]))
+            u_vel_fea=tf.train.Feature(bytes_list=tf.train.BytesList(value=[tf.io.serialize_tensor(tf.convert_to_tensor(u_vel)).numpy()]))
+            tau_wall_fea=tf.train.Feature(bytes_list=tf.train.BytesList(value=[tf.io.serialize_tensor(tf.convert_to_tensor(tau_wall)).numpy()]))
 
             features_dict={
                         'u_vel': u_vel_fea,
                         'tau_wall': tau_wall_fea
             }
             
-            proto=tft.Example(features=tf.train.Features(feature=features_dict))
+            proto=tf.train.Example(features=tf.train.Features(feature=features_dict))
             return proto.SerializeToString()
 
-
+      client=utiliy.slurm_q64(maximum_jobs=6)
 
       Re_Tau = 395 #Direct from simulation
       Re = 10400 #Direct from simulation
@@ -129,11 +151,7 @@ def save(y_plus,data="/home/au643300/NOBACKUP/data/interim/data.zarr/"):
 
       #For now only u and tau are saved
 
-      client=Client(cluster)
-      cluster.adapt(minimum_jobs=0,maximum_jobs=4)
-
       
-
       u_vel=slice['u_vel']
       tau_wall=slice['tau_wall']
       results=[u_vel,tau_wall]
@@ -143,8 +161,7 @@ def save(y_plus,data="/home/au643300/NOBACKUP/data/interim/data.zarr/"):
       tau_wall=results[1].values
       
 
-      save_loc="/home/au643300/DataHandling/data/processed"+"/y_plus_"+str(y_plus)
-
+      save_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))
       #shuffle the data, split into 3 parts and save and save
   
       test_split=0.1
@@ -169,20 +186,20 @@ def save(y_plus,data="/home/au643300/NOBACKUP/data/interim/data.zarr/"):
 
 
       options = tf.io.TFRecordOptions(compression_type="GZIP")
-      with tf.io.TFRecordWriter(save_loc+"_train",options) as writer:
+      with tf.io.TFRecordWriter(os.path.join(save_loc,"train"),options) as writer:
             for i in train:
                         write_d=serialize(u_vel[i,:,:],tau_wall[i,:,:])
                         writer.write(write_d)
             writer.close()
 
 
-      with tf.io.TFRecordWriter(save_loc+"_test",options) as writer:
+      with tf.io.TFRecordWriter(os.path.join(save_loc,"test"),options) as writer:
             for i in test:
                         write_d=serialize(u_vel[i,:,:],tau_wall[i,:,:])
                         writer.write(write_d)
             writer.close()
 
-      with tf.io.TFRecordWriter(save_loc+"_validation",options) as writer:
+      with tf.io.TFRecordWriter(os.path.join(save_loc,"validation"),options) as writer:
             for i in validation:
                         write_d=serialize(u_vel[i,:,:],tau_wall[i,:,:])
                         writer.write(write_d)

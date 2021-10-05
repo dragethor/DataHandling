@@ -4,11 +4,10 @@
 import os
 from operator import ne
 import re
+from dask.base import optimize
 from dask_jobqueue import SLURMCluster
 from dask.distributed import Client, as_completed,wait,fire_and_forget, LocalCluster
 import glob
-from tensorflow.python.ops.gen_batch_ops import batch
-from tensorflow.python.util.nest import flatten
 import xarray as xr
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -23,28 +22,57 @@ import tensorflow as tf
 import matplotlib.pyplot as pl
 import wandb
 from wandb.keras import WandbCallback
-from DataHandling.features.slices import load
+from DataHandling.features import slices
+import shutil
+from DataHandling import utility
+#%%
+
+
+#scratch slurm save spot
+
+scratch=os.path.join('/scratch/', os.environ['SLURM_JOB_ID'])
+data_loc='/home/au643300/DataHandling/data/processed/y_plus_15_test'
+
+
+
+
+#TODO lavet det her færdigt og lave et eller andet smart så jeg ikke kommer til kalde det samme data 3 gange...
+#TODO ryddet op i det her script så det er klar til flere runs...
+#TODO evt gjort med at ændre load til at finde en mappe
+#TODO hvordan skal jeg gøre når jeg skal loade andet/mere data med mine filer? Evt noget med en dict
+
+
+
+
 
 
 #%%
 
-root_logdir = os.path.join('/home/au643300/DataHandling/models', "my_logs")
 
-def get_run_logdir():
-    run_id = time.strftime("run_%Y_%m_%d-%H_%M_%S")
-    return os.path.join(root_logdir, run_id)
+y_plus=15
+repeat=15
+shuffle=100
+batch_size=10
+activation='relu'
+optimizer="adam"
+loss='mean_squared_error'
+patience=200
 
-run_logdir = get_run_logdir() # e.g., './my_logs/run_2019_06_07-15_15_22
+wandb.init(project="CNN_Baseline",sync_tensorboard=True)
+config=wandb.config
+config.y_plus=15
+config.repeat=repeat
+config.shuffle=shuffle
+config.batch_size=batch_size
+config.activation=activation
+config.optimizer=optimizer
+config.loss=loss
+config.patience=patience
 
-test=load('/home/au643300/DataHandling/data/processed/y_plus_15_test',repeat=(10))
 
-train=load('/home/au643300/DataHandling/data/processed/y_plus_15_test',repeat=(10))
+utility.load_from_scratch(y_plus,repeat=repeat,shuffle_size=shuffle,batch_s=batch_size)
 
-validation=load('/home/au643300/DataHandling/data/processed/y_plus_15_test',repeat=(10))
 
-#%%
-
-wandb.init(project="CNN_Baseline",group='...')
 
 #Trying to make the model with keras functional api
 
@@ -54,14 +82,14 @@ weights=[128,256,256]
 input=keras.layers.Input(shape=(256,256))
 reshape=keras.layers.Reshape((256,256,1))(input)
 batch=keras.layers.BatchNormalization(-1)(reshape)
-cnn=keras.layers.Conv2D(64,5,activation='relu')(batch)
+cnn=keras.layers.Conv2D(64,5,activation=activation)(batch)
 batch=keras.layers.BatchNormalization(-1)(cnn)
 for weight in weights:
-    cnn=keras.layers.Conv2D(weight,3,activation='relu')(batch)
+    cnn=keras.layers.Conv2D(weight,3,activation=activation)(batch)
     batch=keras.layers.BatchNormalization(-1)(cnn)
     
 for weight in reversed(weights):
-    cnn=keras.layers.Conv2DTranspose(weight,3,activation='relu')(batch)
+    cnn=keras.layers.Conv2DTranspose(weight,3,activation=activation)(batch)
     batch=keras.layers.BatchNormalization(-1)(cnn)
 
 
@@ -75,17 +103,17 @@ model = keras.Model(inputs=input, outputs=output, name="CNN_baseline")
 model.summary()
 
 
-model.compile(loss="mean_squared_error", optimizer="Adam")
+model.compile(loss=loss, optimizer=optimizer)
 
 
 #%%
-backup='/home/au643300/DataHandling/models/backup/'
 
-str_time=time.strftime("%d-%m-%Y_%H%M")
-backup_dir = os.path.join(backup, str_time)
+backup_dir , log_dir= utility.get_run_dir(wandb.run.name)
 
-#TODO move data to scratch first?
-tensorboard_cb = keras.callbacks.TensorBoard(run_logdir)
+
+
+
+tensorboard_cb = keras.callbacks.TensorBoard(log_dir)
 backup_cb=tf.keras.callbacks.ModelCheckpoint(backup_dir,save_best_only=True)
 early_stopping_cb = keras.callbacks.EarlyStopping(patience=200,
 restore_best_weights=True)

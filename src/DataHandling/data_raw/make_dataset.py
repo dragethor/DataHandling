@@ -1,7 +1,6 @@
 
 def append_tozarr(store="/home/au643300/DataHandling/data/interim/data.zarr"):
     import glob
-    from hashlib import new
     import os
     import numpy as np
     import xarray as xr
@@ -16,22 +15,24 @@ def append_tozarr(store="/home/au643300/DataHandling/data/interim/data.zarr"):
 
 
     if not os.path.exists(store):
+        print("Making new zarr array",flush=True)
         data = to_xarr(files[0])
-        data.attrs['field'] = [file_names[0]]
+        data.attrs['field'] = file_names[0]
         data.to_zarr(store, compute=True)
         print("saved "+file_names[0],flush=True)
         del data
 
+
+
+
     ex = xr.open_zarr(store)
     field = ex.attrs['field']
 
-
-
     # Finds where to start appending the new files
+    index=file_names.index(field[-1])
 
-    new_files=set(file_names).difference(field)
-    new_files=list(new_files)
-    new_files=sorted(new_files)
+    new_files=file_names[index+1:]
+
 
 
     if len(new_files)>0:
@@ -40,7 +41,7 @@ def append_tozarr(store="/home/au643300/DataHandling/data/interim/data.zarr"):
             data = to_xarr(path)
             field.append(file_name)
             data.attrs['field'] = field
-            #data.to_zarr(store, append_dim="time", compute=True)
+            data.to_zarr(store, append_dim="time", compute=True)
             print("saved "+file_name,flush=True)
             del data
     else:
@@ -98,10 +99,13 @@ def netcdf_save(interim="/home/au643300/NOBACKUP/data/interim/snapshots/"):
 
 
 def to_xarr(file_path):
-    """
-    takes a raw *.u file and loads its into xarr
-    :param file_path: the filename of the file there is to be converted to netCDF
-    :return:
+    """takes an path to an u file and converts it to xarr
+
+    Args:
+        file_path (string): a string to a filepath
+
+    Returns:
+        xarray: an xarray dataset
     """
 
     import xarray as xr
@@ -137,7 +141,6 @@ def to_xarr(file_path):
     # print('saved'+file_path[-12:-1])
     # ds.to_netcdf(save_path + file_path[-12:-1] + 'nc', engine='netcdf4')
     ds = ds.expand_dims("time")
-    ds = ds.chunk(10000)
     return ds
 
 
@@ -384,5 +387,3 @@ def readDNSdata(inputfilename, onlyU=False):
 
     return quantities, quanList, xF, yF, zF, length, storl, paraString
 
-
-a=append_tozarr()
