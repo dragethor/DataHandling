@@ -24,7 +24,7 @@ def get_run_dir(wand_run_name):
     return logdir, backupdir
 
 
-def slurm_q64(maximum_jobs):
+def slurm_q64(maximum_jobs,time='0-01:00:00',ram='50GB',cores=8):
     """Initiate a slurm cluster on q64
 
     Args:
@@ -36,19 +36,20 @@ def slurm_q64(maximum_jobs):
     from dask_jobqueue import SLURMCluster
     from dask.distributed import Client
     
-    cluster=SLURMCluster(cores=8,
-                memory="50GB",
+    cluster=SLURMCluster(cores=cores,
+                memory=ram,
                 queue='q64',
-                walltime='0-01:00:00',
+                walltime=time,
                 local_directory='/scratch/$SLURM_JOB_ID',
                 interface='ib0',
                 scheduler_options={'interface':'ib0'},
                 extra=["--lifetime", "50m"]
                 )
     client=Client(cluster)
+
     cluster.adapt(minimum_jobs=0,maximum_jobs=maximum_jobs)
-    
-    return client
+
+    return client, cluster
 
 
 def y_plus_to_y(y_plus):

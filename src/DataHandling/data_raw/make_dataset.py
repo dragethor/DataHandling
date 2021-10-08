@@ -17,7 +17,7 @@ def append_tozarr(store="/home/au643300/DataHandling/data/interim/data.zarr"):
     if not os.path.exists(store):
         print("Making new zarr array",flush=True)
         data = to_xarr(files[0])
-        data.attrs['field'] = file_names[0]
+        data.attrs['field'] = [file_names[0]]
         data.to_zarr(store, compute=True)
         print("saved "+file_names[0],flush=True)
         del data
@@ -141,6 +141,7 @@ def to_xarr(file_path):
     # print('saved'+file_path[-12:-1])
     # ds.to_netcdf(save_path + file_path[-12:-1] + 'nc', engine='netcdf4')
     ds = ds.expand_dims("time")
+    ds = ds.chunk(chunks={'time':1,"x":256,"y":3,"z":256})
     return ds
 
 
