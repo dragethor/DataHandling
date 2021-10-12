@@ -32,7 +32,7 @@ def feature_description(save_loc):
 
 
 
-def read_tfrecords(serial_data,format):
+def read_tfrecords(serial_data,format,target):
     """Reads the tfRecords and converts them to a tuple where first entry is the features and the second is the targets
 
     Args:
@@ -54,20 +54,19 @@ def read_tfrecords(serial_data,format):
         else:
             print("only arrays have been implemented")
     
-    list_of_keys=list(dict_for_dataset.keys())
 
-    target=dict_for_dataset[list_of_keys[-1]]
-    dict_for_dataset.pop(list_of_keys[-1])
+    target_array=dict_for_dataset[target[0]]
+    dict_for_dataset.pop(target[0])
 
      
-    return (dict_for_dataset,target)
+    return (dict_for_dataset,target_array)
 
 
 
 
 
 
-def load_from_scratch(y_plus,var,target,repeat=10,shuffle_size=100,batch_s=10):
+def load_from_scratch(y_plus,var,target,normalized,repeat=10,shuffle_size=100,batch_s=10):
     """Copyes TFrecord to scratch and loads the data from there
 
     Args:
@@ -85,13 +84,11 @@ def load_from_scratch(y_plus,var,target,repeat=10,shuffle_size=100,batch_s=10):
     import tensorflow as tf
     import os
     import shutil
-
-    save_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))+"_var_"+str(len(var))
+    import xarray as xr
+    save_loc=slice_loc(y_plus,var,target,normalized)
 
     if not os.path.exists(save_loc):
-        print("data does not exist. Making new",flush=True)
-        save_tf(y_plus,var)
-
+        print("data does not exist. Make som new",flush=True)
 
 
     #copying the data to scratch
@@ -108,7 +105,7 @@ def load_from_scratch(y_plus,var,target,repeat=10,shuffle_size=100,batch_s=10):
         data_loc=os.path.join(scratch,name)
         shutil.copy2(os.path.join(save_loc,name),data_loc)
         dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP')
-        dataset=dataset.map(lambda x: read_tfrecords(x,features_dict),num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        dataset=dataset.map(lambda x: read_tfrecords(x,features_dict,target),num_parallel_calls=tf.data.experimental.AUTOTUNE)
         dataset=dataset.shuffle(buffer_size=shuffle_size)
         dataset=dataset.repeat(repeat)
         dataset=dataset.batch(batch_size=batch_s)
@@ -140,7 +137,6 @@ def save_tf(y_plus,var,target,data,normalized=False):
     from DataHandling import utility
     import shutil
     import json
-
 
     def custom_optimize(dsk, keys):
         dsk = dask.optimization.inline(dsk, inline_constants=True)
@@ -227,32 +223,38 @@ def save_tf(y_plus,var,target,data,normalized=False):
     #for name in var:
             #load_dict[name] = tf.io.FixedLenFeature([], tf.string, default_value="")
 
-    client, cluster =utility.slurm_q64(2)
+    client, cluster =utility.slurm_q64(1)
 
-
+    save_loc=slice_loc(y_plus,var,target,normalized)
+    
     #append the target
-    var=var+target
+    var.append(target[0])
 
 
     
 
     slice_array=data
-    if target[0]=="tau_wall":
-        slice_array=slice_array.assign(tau_wall=slice_array['u_vel'].differentiate('y').sel(y=utility.y_plus_to_y(0),method="nearest"))
+
     
+    if target[0]=='tau_wall':
+        target_slice=slice_array['u_vel'].differentiate('y').sel(y=utility.y_plus_to_y(0),method="nearest")
+    else:
+        target_slice=slice_array['u_vel'].sel(y=utility.y_plus_to_y(0),method="nearest")
+
     slice_array=slice_array.sel(y=utility.y_plus_to_y(y_plus), method="nearest")
+    slice_array[target[0]]=target_slice
     slice_array=slice_array[var]
     
+
+
+
     if normalized==True:
         slice_array=(slice_array-slice_array.mean())/(slice_array.max()-slice_array.min())
         slice_array=dask.compute(slice_array,retries=5)[0]
-        save_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))+"_var"+str(len(var)-1)+"_"+target[0]+"_normalized"
     else:
         slice_array=dask.compute(slice_array,retries=5)[0]
-        save_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))+"_var"+str(len(var)-1)+"_"+target[0]
+
     
-
-
     #shuffle the data, split into 3 parts and save
     train, validation, test = split_test_train_val(slice_array)
 
@@ -290,119 +292,12 @@ def save_tf(y_plus,var,target,data,normalized=False):
     return None
 
 
-def save_legacy(y_plus,data="/home/au643300/NOBACKUP/data/interim/data.zarr/"):
-      """Takes the full dataset and saves slices of tau_wall and u_vel at some y+ value
 
-      Args:
-          y_plus (int): The chosen y+ value
-          data (str, optional): Data location. Defaults to "/home/au643300/NOBACKUP/data/interim/data.zarr/".
+def slice_loc(y_plus,var,target,normalized):
+    import os
+    if normalized==True:
+        slice_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))+"_var"+str(len(var))+"_"+target[0]+"_normalized"
+    else:
+        slice_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))+"_var"+str(len(var))+"_"+target[0]
 
-      Returns:
-          None: 
-      """
-      import os
-      from dask_jobqueue import SLURMCluster
-      from dask.distributed import Client
-      import xarray as xr
-      import numpy as np
-      import dask
-      import zarr
-      import time
-      import tensorflow as tf
-      from DataHandling import utiliy
-
-      def custom_optimize(dsk, keys):
-            dsk = dask.optimization.inline(dsk, inline_constants=True)
-            return dask.array.optimization.optimize(dsk, keys)
-
-
-      def serialize(u_vel,tau_wall):
-            u_vel_fea=tf.train.Feature(bytes_list=tf.train.BytesList(value=[tf.io.serialize_tensor(tf.convert_to_tensor(u_vel)).numpy()]))
-            tau_wall_fea=tf.train.Feature(bytes_list=tf.train.BytesList(value=[tf.io.serialize_tensor(tf.convert_to_tensor(tau_wall)).numpy()]))
-
-            features_dict={
-                        'u_vel': u_vel_fea,
-                        'tau_wall': tau_wall_fea
-            }
-            
-            proto=tf.train.Example(features=tf.train.Features(feature=features_dict))
-            return proto.SerializeToString()
-
-      client=utiliy.slurm_q64(maximum_jobs=6)
-
-      Re_Tau = 395 #Direct from simulation
-      Re = 10400 #Direct from simulation
-      nu = 1/Re #Kinematic viscosity
-      u_tau = Re_Tau*nu
-
-      #converts between y_plus and y
-      y_func= lambda y_plus : y_plus*nu/u_tau
-
-      #Opening up the full dataset
-      source=xr.open_zarr(data)
-
-      slice=source
-      slice=slice.assign(tau_wall=slice['u_vel'].differentiate('y').isel(y=-1))
-      slice=slice.sel(y=y_func(15), method="nearest")
-
-
-      #For now only u and tau are saved
-
-      
-      u_vel=slice['u_vel']
-      tau_wall=slice['tau_wall']
-      results=[u_vel,tau_wall]
-      results=dask.optimize(results)[0]
-      results=dask.compute(*results)
-      u_vel=results[0].values
-      tau_wall=results[1].values
-      
-
-      save_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))
-      #shuffle the data, split into 3 parts and save and save
-  
-      test_split=0.1
-      validation_split=0.2
-
-
-
-      num_snapshots=u_vel.shape[0]
-
-      train=np.arange(0,num_snapshots)
-
-
-      validation=np.random.choice(train,size=int(num_snapshots*validation_split),replace=False)
-      train=np.setdiff1d(train,validation)
-
-      test=np.random.choice(train,size=int(num_snapshots*test_split),replace=False)
-      train=np.setdiff1d(train,test)
-
-
-      np.random.shuffle(train)
-
-
-
-      options = tf.io.TFRecordOptions(compression_type="GZIP")
-      with tf.io.TFRecordWriter(os.path.join(save_loc,"train"),options) as writer:
-            for i in train:
-                        write_d=serialize(u_vel[i,:,:],tau_wall[i,:,:])
-                        writer.write(write_d)
-            writer.close()
-
-
-      with tf.io.TFRecordWriter(os.path.join(save_loc,"test"),options) as writer:
-            for i in test:
-                        write_d=serialize(u_vel[i,:,:],tau_wall[i,:,:])
-                        writer.write(write_d)
-            writer.close()
-
-      with tf.io.TFRecordWriter(os.path.join(save_loc,"validation"),options) as writer:
-            for i in validation:
-                        write_d=serialize(u_vel[i,:,:],tau_wall[i,:,:])
-                        writer.write(write_d)
-            writer.close()
-    
-      
-      return None
-
-
+    return slice_loc

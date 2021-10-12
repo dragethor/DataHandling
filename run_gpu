@@ -3,7 +3,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task 4
 #SBATCH --mincpus=4
-#SBATCH --time=2-0:00:00
+#SBATCH --time=3-0:00:00
 #SBATCH --mem=25gb
 #SBATCH -p q32g
 #SBATCH --gres gpu
@@ -17,6 +17,8 @@
 #srun python3 -u for_run.py
 source /home/${USER}/.bashrc
 conda activate tf_gpu
-srun python3 -u /home/au643300/DataHandling/notebooks/30_09_21_CNN_proper_transpose_swish.py
-srun python3 -u /home/au643300/DataHandling/notebooks/30_09_21_CNN_proper_transpose_elu.py
-srun python3 -u /home/au643300/DataHandling/notebooks/30_09_21_CNN_proper_transpose_relu.py
+
+#srun python3 -u /home/au643300/DataHandling/notebooks/30_09_21_CNN_proper_transpose_elu.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/12-10-21_test_skip_connection.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/12-10-21_test_normalized.py
+srun python3 -u /home/au643300/DataHandling/notebooks/12-10-21_test_dropout.py
