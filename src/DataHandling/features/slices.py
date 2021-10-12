@@ -4,89 +4,129 @@
 
 
 
+def feature_description(save_loc):
+    """Loads the json file descriping the file format for parsing the tfRecords
+
+    Args:
+        save_loc (string): The file path to the folder where the data is saved
+
+    Returns:
+        dict: dict used to read tfRecords
+    """
+    import os
+    import tensorflow as tf
+    import json
+    feature_format={}
+
+    with open(os.path.join(save_loc,"format.json"),'r') as openfile:
+        format_json=json.load(openfile)
+    
+
+
+    for key in list(format_json.keys()):
+        if format_json[key] =="array_serial":
+            feature_format[key]= tf.io.FixedLenFeature([], tf.string, default_value="")
+        else:
+            print("other features than array has not yet been implemented!")
+    return feature_format
 
 
 
-def read_tfrecords(serial_data):
-      """reads tfrecords from file and unserializeses them
+def read_tfrecords(serial_data,format):
+    """Reads the tfRecords and converts them to a tuple where first entry is the features and the second is the targets
 
-      Args:
-          serial_data (TFrecord): [Tfrecord that needs to be unserialzed]
+    Args:
+        serial_data (TFrecordDataset): The output of the function tf.data.TFRecordDataset
+        format (dict): dict used to parse the TFrecord example format
 
-      Returns:
-          (u_vel,tau_wall) (tuple): A tuple of u_vel and tau_wall
-      """
-      import tensorflow as tf
+    Returns:
+        tuple: tuple of (features,labels)
+    """
+    import tensorflow as tf
       
-      format = {
-      "u_vel": tf.io.FixedLenFeature([], tf.string, default_value=""),
-      "tau_wall": tf.io.FixedLenFeature([], tf.string, default_value="")
-      }
+    features=tf.io.parse_single_example(serial_data, format)
 
+    dict_for_dataset={}
+
+    for key, value in features.items():
+        if value.dtype == tf.string:
+            dict_for_dataset[key]=tf.io.parse_tensor(value,tf.float64)
+        else:
+            print("only arrays have been implemented")
+    
+    list_of_keys=list(dict_for_dataset.keys())
+
+    target=dict_for_dataset[list_of_keys[-1]]
+    dict_for_dataset.pop(list_of_keys[-1])
+
+     
+    return (dict_for_dataset,target)
+
+
+
+
+
+
+def load_from_scratch(y_plus,var,target,repeat=10,shuffle_size=100,batch_s=10):
+    """Copyes TFrecord to scratch and loads the data from there
+
+    Args:
+        y_plus (int): the y_plus value to load data from
+        var (list): list of features
+        target (list): list of targets. only 1 for now
+        repeat (int, optional): number of repeats of the dataset for each epoch. Defaults to 10.
+        shuffle_size (int, optional): the size of the shuffle buffer. Defaults to 100.
+        batch_s (int, optional): the number of snapshots in each buffer. Defaults to 10.
+
+    Returns:
+        [type]: [description]
+    """
       
-      features=tf.io.parse_single_example(serial_data, format)
+    import tensorflow as tf
+    import os
+    import shutil
 
-      u_vel=tf.io.parse_tensor(features['u_vel'],tf.float64)
-      tau_wall=tf.io.parse_tensor(features['tau_wall'],tf.float64)
-      return (u_vel, tau_wall)
+    save_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))+"_var_"+str(len(var))
 
-
-
-
-def load_from_scratch(y_plus,var,repeat=10,shuffle_size=100,batch_s=10):
-      """A function that loads in a TFRecord from a saved location
-
-      Args:
-          y_plus (int): The y plus value 
-          repeat (int): How many repeats of the data
-          shuffle_size (int): How big a shuffle cache should be
-          batch_s (int): Size of each batch
-
-      Returns:
-          data: data[0]=test, data[1]=train, data[2]=validation 
-      """
-      
-      import tensorflow as tf
-      import os
-      import shutil
-
-      save_loc=os.path.join("/home/au643300/DataHandling/data/processed",*('y_plus_'+str(y_plus)))
-
-      if not os.path.exists(save_loc):
-            print("data does not exist. Making new",flush=True)
-            save_tf(y_plus,var)
-      
-      
-      
-      #copying the data to scratch
-      scratch=os.path.join('/scratch/', os.environ['SLURM_JOB_ID'])
-      shutil.copytree(save_loc,scratch)
-      
-
-
-      splits=['test','train','validation']
-
-      data=[]
-      for name in splits:
-            data_loc=os.path.join(save_loc,name)
-            dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP')
-            dataset=dataset.map(read_tfrecords)
-            dataset=dataset.shuffle(buffer_size=shuffle_size)
-            dataset=dataset.repeat(repeat)
-            dataset=dataset.batch(batch_size=batch_s)
-            dataset.prefetch(tf.data.experimental.AUTOTUNE)
-            data=data.append(dataset)
-      return data[0],data[1],data[2]
+    if not os.path.exists(save_loc):
+        print("data does not exist. Making new",flush=True)
+        save_tf(y_plus,var)
 
 
 
-def save_tf(y_plus,var,data):
+    #copying the data to scratch
+    scratch=os.path.join('/scratch/', os.environ['SLURM_JOB_ID'])
+    #shutil.copytree(save_loc,scratch)
+    #print("copying data to scratch")
+
+    features_dict=feature_description(save_loc)
+
+    splits=['train','validation','test']
+
+    data=[]
+    for name in splits:
+        data_loc=os.path.join(scratch,name)
+        shutil.copy2(os.path.join(save_loc,name),data_loc)
+        dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP')
+        dataset=dataset.map(lambda x: read_tfrecords(x,features_dict),num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        dataset=dataset.shuffle(buffer_size=shuffle_size)
+        dataset=dataset.repeat(repeat)
+        dataset=dataset.batch(batch_size=batch_s)
+        dataset.prefetch(tf.data.experimental.AUTOTUNE)
+        data.append(dataset)
+    return data
+
+
+
+def save_tf(y_plus,var,target,data,normalized=False):
     """Takes a xarray dataset extracts the variables in var and saves them as a tfrecord
 
     Args:
         y_plus (int): at which y_plus to take a slice
-        var (list): list of inputs to save. NOT with target tau_wall
+        var (list): list of inputs to save. NOT with target
+        target (list): list of target. Only 1 target for now
         data (xarray): dataset of type xarray
+        normalized(bool): if the data is normalized or not
 
     Returns:
         None:
@@ -137,7 +177,7 @@ def save_tf(y_plus,var,data):
         for name in var:
             feature=slice_array[name].values
             if type(feature) is np.ndarray:
-                feature_dict[name] = numpy_to_feature(slice_array[name].values)
+                feature_dict[name] = numpy_to_feature(feature)
             else:
                 print("other inputs that xarray/ numpy has not yet been defined")
         
@@ -187,26 +227,30 @@ def save_tf(y_plus,var,data):
     #for name in var:
             #load_dict[name] = tf.io.FixedLenFeature([], tf.string, default_value="")
 
-    client, cluster =utility.slurm_q64(1,ram='75GB')
+    client, cluster =utility.slurm_q64(2)
 
 
-    #tau_wall is allways used
-    var.append('tau_wall')
+    #append the target
+    var=var+target
 
 
-
+    
 
     slice_array=data
-    slice_array=slice_array.assign(tau_wall=slice_array['u_vel'].differentiate('y')).sel(y=utility.y_plus_to_y(0),method="nearest")
+    if target[0]=="tau_wall":
+        slice_array=slice_array.assign(tau_wall=slice_array['u_vel'].differentiate('y').sel(y=utility.y_plus_to_y(0),method="nearest"))
+    
     slice_array=slice_array.sel(y=utility.y_plus_to_y(y_plus), method="nearest")
-
-
     slice_array=slice_array[var]
-    slice_array=dask.compute(slice_array)
-    #slice_array=slice_array.result()
-
-
-    save_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))+"_var_"+str(len(var)-1)
+    
+    if normalized==True:
+        slice_array=(slice_array-slice_array.mean())/(slice_array.max()-slice_array.min())
+        slice_array=dask.compute(slice_array,retries=5)[0]
+        save_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))+"_var"+str(len(var)-1)+"_"+target[0]+"_normalized"
+    else:
+        slice_array=dask.compute(slice_array,retries=5)[0]
+        save_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))+"_var"+str(len(var)-1)+"_"+target[0]
+    
 
 
     #shuffle the data, split into 3 parts and save
@@ -360,8 +404,5 @@ def save_legacy(y_plus,data="/home/au643300/NOBACKUP/data/interim/data.zarr/"):
     
       
       return None
-
-
-
 
 

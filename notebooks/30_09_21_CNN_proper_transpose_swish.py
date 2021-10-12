@@ -25,40 +25,31 @@ from wandb.keras import WandbCallback
 from DataHandling.features import slices
 import shutil
 from DataHandling import utility
-#%%
-
-
-#scratch slurm save spot
-
-scratch=os.path.join('/scratch/', os.environ['SLURM_JOB_ID'])
-data_loc='/home/au643300/DataHandling/data/processed/y_plus_15_test'
-
-
-
-
-#TODO lavet det her færdigt og lave et eller andet smart så jeg ikke kommer til kalde det samme data 3 gange...
-#TODO ryddet op i det her script så det er klar til flere runs...
-#TODO evt gjort med at ændre load til at finde en mappe
-#TODO hvordan skal jeg gøre når jeg skal loade andet/mere data med mine filer? Evt noget med en dict
-
-
-
-
 
 
 #%%
 
 
 y_plus=15
-repeat=15
+repeat=5
 shuffle=100
 batch_size=10
-activation='relu'
+activation='swish'
 optimizer="adam"
 loss='mean_squared_error'
 patience=200
+var=['u_vel']
 
-wandb.init(project="CNN_Baseline",sync_tensorboard=True)
+data=slices.load_from_scratch(y_plus,var,repeat=repeat,shuffle_size=shuffle,batch_s=batch_size)
+
+train=data[0]
+validation=data[1]
+
+
+
+#%%
+#Wandb stuff
+wandb.init(project="CNN_Baseline")
 config=wandb.config
 config.y_plus=15
 config.repeat=repeat
@@ -68,18 +59,15 @@ config.activation=activation
 config.optimizer=optimizer
 config.loss=loss
 config.patience=patience
+config.variables=var
+config.target="tau_wall"
 
 
-utility.load_from_scratch(y_plus,repeat=repeat,shuffle_size=shuffle,batch_s=batch_size)
-
-
-
-#Trying to make the model with keras functional api
 
 
 
 weights=[128,256,256]
-input=keras.layers.Input(shape=(256,256))
+input=keras.layers.Input(shape=(256,256),name='u_vel')
 reshape=keras.layers.Reshape((256,256,1))(input)
 batch=keras.layers.BatchNormalization(-1)(reshape)
 cnn=keras.layers.Conv2D(64,5,activation=activation)(batch)
@@ -117,6 +105,6 @@ tensorboard_cb = keras.callbacks.TensorBoard(log_dir)
 backup_cb=tf.keras.callbacks.ModelCheckpoint(backup_dir,save_best_only=True)
 early_stopping_cb = keras.callbacks.EarlyStopping(patience=200,
 restore_best_weights=True)
-model.fit(x=test,epochs=100000,validation_data=validation,callbacks=[WandbCallback(),early_stopping_cb,backup_cb,tensorboard_cb])
+model.fit(x=train,epochs=100000,validation_data=validation,callbacks=[WandbCallback(),early_stopping_cb,backup_cb,tensorboard_cb])
 
 

@@ -82,6 +82,7 @@ target/
 /data/
 *.zarr
 wandb/
+run*/
 
 # Mac OS-specific storage files
 .DS_Store
