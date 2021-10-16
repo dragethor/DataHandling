@@ -104,12 +104,12 @@ def load_from_scratch(y_plus,var,target,normalized,repeat=10,shuffle_size=100,ba
     for name in splits:
         data_loc=os.path.join(scratch,name)
         shutil.copy2(os.path.join(save_loc,name),data_loc)
-        dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP')
+        dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP',buffer_size=100,num_parallel_reads=3)
         dataset=dataset.map(lambda x: read_tfrecords(x,features_dict,target),num_parallel_calls=tf.data.experimental.AUTOTUNE)
         dataset=dataset.shuffle(buffer_size=shuffle_size)
         dataset=dataset.repeat(repeat)
         dataset=dataset.batch(batch_size=batch_s)
-        dataset.prefetch(tf.data.experimental.AUTOTUNE)
+        dataset=dataset.prefetch(tf.data.experimental.AUTOTUNE)
         data.append(dataset)
     return data
 
@@ -249,7 +249,7 @@ def save_tf(y_plus,var,target,data,normalized=False):
 
 
     if normalized==True:
-        slice_array=(slice_array-slice_array.mean())/(slice_array.max()-slice_array.min())
+        slice_array=(slice_array-slice_array.mean())/(slice_array.std)()
         slice_array=dask.compute(slice_array,retries=5)[0]
     else:
         slice_array=dask.compute(slice_array,retries=5)[0]
@@ -294,6 +294,17 @@ def save_tf(y_plus,var,target,data,normalized=False):
 
 
 def slice_loc(y_plus,var,target,normalized):
+    """where to save the slices
+
+    Args:
+        y_plus (int): y_plus value of slice
+        var (list): list of variables
+        target (list): list of targets
+        normalized (bool): if the data is normalized or not
+
+    Returns:
+        str: string of file save location
+    """
     import os
     if normalized==True:
         slice_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))+"_var"+str(len(var))+"_"+target[0]+"_normalized"

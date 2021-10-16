@@ -4,7 +4,7 @@
 
 def baseline_cnn(activation='elu'):
     
-    
+    activation='elu'
     from tensorflow import keras
     import tensorflow as tf
 

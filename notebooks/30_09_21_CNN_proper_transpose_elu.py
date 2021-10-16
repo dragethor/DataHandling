@@ -39,7 +39,7 @@ batch_size=10
 activation='elu'
 optimizer="adam"
 loss='mean_squared_error'
-patience=200
+patience=50
 var=['u_vel']
 target=['tau_wall']
 normalized=False
@@ -55,7 +55,7 @@ validation=data[1]
 
 #%%
 #Wandb stuff
-wandb.init(project="CNN_Baseline",notes="Test of Basline network")
+wandb.init(project="Thesis",notes="Test of baseline network")
 config=wandb.config
 config.y_plus=y_plus
 config.repeat=repeat
@@ -81,16 +81,16 @@ model.compile(loss=loss, optimizer=optimizer)
 
 #%%
 
-backup_dir , log_dir= utility.get_run_dir(wandb.run.name)
+logdir, backupdir= utility.get_run_dir(wandb.run.name)
 
 
 
 
-tensorboard_cb = keras.callbacks.TensorBoard(log_dir)
-backup_cb=tf.keras.callbacks.ModelCheckpoint(backup_dir,save_best_only=True)
+tensorboard_cb = keras.callbacks.TensorBoard(logdir)
+backup_cb=tf.keras.callbacks.ModelCheckpoint(backupdir,save_best_only=True)
 early_stopping_cb = keras.callbacks.EarlyStopping(patience=patience,
 restore_best_weights=True)
 model.fit(x=train,epochs=100000,validation_data=validation,callbacks=[WandbCallback(),early_stopping_cb,backup_cb,tensorboard_cb])
 
-model.save(os.join.path("/home/au643300/DataHandling/models/trained",'baseline_elu'))
+model.save(os.path.join("/home/au643300/DataHandling/models/trained",wandb.run.name))
 

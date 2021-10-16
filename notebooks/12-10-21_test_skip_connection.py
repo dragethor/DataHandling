@@ -2,9 +2,7 @@
 
 #%%
 
-%load_ext autoreload
-%aimport DataHandling
-%autoreload 1
+
 import os
 from operator import ne
 import re
@@ -87,7 +85,7 @@ model.compile(loss=loss, optimizer=optimizer)
 
 #%%
 
-backup_dir , log_dir= utility.get_run_dir(wandb.run.name)
+logdir, backupdir= utility.get_run_dir(wandb.run.name)
 
 
 
@@ -98,5 +96,5 @@ early_stopping_cb = keras.callbacks.EarlyStopping(patience=patience,
 restore_best_weights=True)
 model.fit(x=train,epochs=100000,validation_data=validation,callbacks=[WandbCallback(),early_stopping_cb,backup_cb,tensorboard_cb])
 
-model.save(os.join.path("/home/au643300/DataHandling/models/trained",'baseline_skip_elu'))
+model.save(os.path.join("/home/au643300/DataHandling/models/trained",'baseline_skip_elu'))
 

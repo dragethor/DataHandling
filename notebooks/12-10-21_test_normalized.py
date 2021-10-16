@@ -29,8 +29,6 @@ from DataHandling.models import models
 
 
 
-
-
 #%%
 
 
@@ -41,13 +39,11 @@ batch_size=10
 activation='elu'
 optimizer="adam"
 loss='mean_squared_error'
-patience=200
+patience=50
 var=['u_vel']
 target=['tau_wall']
 normalized=True
 dropout=False
-
-
 
 data=slices.load_from_scratch(y_plus,var,target,normalized,repeat=repeat,shuffle_size=shuffle,batch_s=batch_size)
 
@@ -55,11 +51,13 @@ train=data[0]
 validation=data[1]
 
 
+
+
 #%%
 #Wandb stuff
-wandb.init(project="CNN_Baseline",notes="Test of effect of normalized data")
+wandb.init(project="Thesis",notes="Test of baseline network with normalized data")
 config=wandb.config
-config.y_plus=15
+config.y_plus=y_plus
 config.repeat=repeat
 config.shuffle=shuffle
 config.batch_size=batch_size
@@ -73,11 +71,9 @@ config.dropout=dropout
 config.normalized=normalized
 
 
-
-model=models.baseline_cnn_dropout(activation)
+model=models.baseline_cnn(activation)
 
 model.summary()
-
 
 
 model.compile(loss=loss, optimizer=optimizer)
@@ -85,16 +81,16 @@ model.compile(loss=loss, optimizer=optimizer)
 
 #%%
 
-backup_dir , log_dir= utility.get_run_dir(wandb.run.name)
+logdir, backupdir= utility.get_run_dir(wandb.run.name)
 
 
 
 
-tensorboard_cb = keras.callbacks.TensorBoard(log_dir)
-backup_cb=tf.keras.callbacks.ModelCheckpoint(backup_dir,save_best_only=True)
+tensorboard_cb = keras.callbacks.TensorBoard(logdir)
+backup_cb=tf.keras.callbacks.ModelCheckpoint(backupdir,save_best_only=True)
 early_stopping_cb = keras.callbacks.EarlyStopping(patience=patience,
 restore_best_weights=True)
 model.fit(x=train,epochs=100000,validation_data=validation,callbacks=[WandbCallback(),early_stopping_cb,backup_cb,tensorboard_cb])
 
-model.save(os.join.path("/home/au643300/DataHandling/models/trained",'baseline_normalized_elu'))
+model.save(os.path.join("/home/au643300/DataHandling/models/trained",wandb.run.name))
 

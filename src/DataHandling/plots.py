@@ -3,7 +3,9 @@
 def stat_plots(mean_dataset_loc,batches):
     from DataHandling.features.read_valdata import get_valdata
     import matplotlib.pyplot as plt
-
+    import xarray as xr
+    import numpy as np
+    
     mean = xr.open_mfdataset(mean_dataset_loc, parallel=True)
     mean = mean.persist()
     mean = mean.groupby_bins("time", batches).mean()
@@ -19,7 +21,7 @@ def stat_plots(mean_dataset_loc,batches):
     colorList = ['*b', '*c', '*y', '*g', '.b', '.c', '.y', '.g', 'vb', 'vc', 'vy', 'vg', '<b', '<c', '<y', '<g'] * 30
     # Plotting the batches in mean for U
     for i in range(len(mean.time_bins)):
-        ax1.plot(mean.y_plus, mean.u_plusmean.isel(time_bins=i), colorList[i], label='DNS batch' + str(i))
+        ax1.plot(mean.y_plus, mean.u_plusmean.isel(time_bins=i), colorList[i], label='DNS batch ' + str(i))
 
     ax1.plot(linerRegion, linerRegion, 'r', label='Linear Region')
     ax1.plot(np.linspace(20, 180), logRegion, 'm', linewidth=5, label='Log Region')
@@ -39,7 +41,7 @@ def stat_plots(mean_dataset_loc,batches):
     ax2.plot('y+', 'u_plusRMS', 'ok', data=val_u, label='DNS validation data')
     ax2.set_title('Normalized RMS of fluctuations')
     for i in range(len(mean.time_bins)):
-        ax2.plot(mean.y_plus, mean.u_plusRMS.isel(time_bins=i), colorList[i], label='DNS batch' + str(i))
+        ax2.plot(mean.y_plus, mean.u_plusRMS.isel(time_bins=i), colorList[i], label='DNS batch ' + str(i))
 
     ax2.set_xscale('log')
     ax2.set_xlabel('$y^{+}$')
@@ -115,3 +117,90 @@ def stat_plots(mean_dataset_loc,batches):
 
     plt.tight_layout()
     plt.savefig("/home/au643300/DataHandling/reports/figures/Pr_val.pdf", bbox_inches='tight')
+
+
+def get_plot_data(data):
+    
+   
+    feature_list=[]
+    target_list=[]
+
+    for data_type in data:
+        for i in data_type.take(1):
+           feature_list.append(i[0])
+           target_list.append(i[1].numpy())
+
+    
+    names=['train','validation','test']
+    return feature_list,target_list,names
+
+
+
+
+def heatmap(model_name,var,target,y_plus,normalize):
+    import os
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from tensorflow import keras
+    from DataHandling.features import slices
+    import shutil
+
+
+
+    model_path=os.path.join("/home/au643300/DataHandling/models/trained/",model_name)
+    output_path='/home/au643300/DataHandling/reports/figures'
+    data_path=slices.slice_loc(y_plus,var,target,normalize)+"/"
+    data_folder=os.path.basename(os.path.dirname(data_path))
+
+    output_path=os.path.join(output_path,model_name+'_'+data_folder)
+
+    data=slices.load_from_scratch(y_plus,var,target,normalized=normalize)
+    
+    #TODO ændret det her sådan at den enten bruger h5 eller folder
+    model=keras.models.load_model(os.path.join(model_path,"model.h5"))
+
+
+
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    else:
+        print('deleting old version')
+        shutil.rmtree(output_path)           
+        os.makedirs(output_path)
+
+    feature_list,target_list,names=get_plot_data(data)
+
+
+
+    predctions=[]
+    for features in feature_list:
+        predctions.append(model.predict(features))
+
+    predctions=[np.squeeze(x,axis=3) for x in predctions]
+
+
+
+    #%%
+
+
+    #Plot of test, train, validation
+    for i in range(3):
+        plt.figure()
+        fig, axes=plt.subplots(1,2,sharex=True,sharey=True)
+        cbar_ax = fig.add_axes([.91, 0.2, .04, .5])
+        axes[0].set_title('Target')
+        sns.heatmap(target_list[i][1,:,:],ax=axes[0],square=True,xticklabels=False,yticklabels=False,cmap="rocket",cbar_ax=cbar_ax)
+        axes[1].set_title('Prediction')
+        sns.heatmap(predctions[i][1,:,:],ax=axes[1],square=True,xticklabels=False,yticklabels=False,cmap="rocket",cbar_ax=cbar_ax)
+        fig.tight_layout(rect=[0, 0, .9, 1])
+        plt.savefig(os.path.join(output_path,names[i]+".pdf"),dpi=200,bbox_inches='tight',format='pdf')
+
+        plt.figure()
+        sns.heatmap(predctions[i][1,:,:]-target_list[i][1,:,:],square=True,xticklabels=False,yticklabels=False,cmap="icefire")
+        plt.savefig(os.path.join(output_path,names[i]+"_difference"+".pdf"),dpi=200,bbox_inches='tight',format='pdf')
+
+
+    plt.figure()
+    keras.utils.plot_model(model,to_file=os.path.join(output_path,"network.png"),show_shapes=True,dpi=200)
+    return None
