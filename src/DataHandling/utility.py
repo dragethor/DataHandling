@@ -1,4 +1,27 @@
 
+def get_data(data):
+    """takes a TFrecord and returns list of features and targets for train, validation and test
+
+    Args:
+        data (TFrecord): TFrecord dataset
+
+    Returns:
+        (list, list, list): list of features, list of targets, and list of names
+    """
+    
+    feature_list=[]
+    target_list=[]
+
+    for data_type in data:
+        for i in data_type.take(2):
+           feature_list.append(i[0])
+           target_list.append(i[1].numpy())
+
+    
+    names=['train','validation','test']
+    return feature_list,target_list,names
+
+
 
 
 def get_run_dir(wand_run_name):

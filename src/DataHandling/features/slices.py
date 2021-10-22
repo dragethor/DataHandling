@@ -231,29 +231,29 @@ def save_tf(y_plus,var,target,data,normalized=False):
     var.append(target[0])
 
 
-    
+    #select y_plus value and remove unessary components. Normalize if needed
 
     slice_array=data
 
-    
+
     if target[0]=='tau_wall':
         target_slice=slice_array['u_vel'].differentiate('y').sel(y=utility.y_plus_to_y(0),method="nearest")
+        if normalized==True:
+            target_slice=(target_slice-target_slice.mean(dim=('time','x','z')))/(target_slice.std(dim=('time','x','z')))
     else:
-        target_slice=slice_array['u_vel'].sel(y=utility.y_plus_to_y(0),method="nearest")
+        target_slice=slice_array[target[0]].sel(y=utility.y_plus_to_y(0),method="nearest")
+        if normalized==True:
+            target_slice=(target_slice-target_slice.mean(dim=('time','x','z')))/(target_slice.std(dim=('time','x','z')))
+
 
     slice_array=slice_array.sel(y=utility.y_plus_to_y(y_plus), method="nearest")
+    if normalized==True:
+        slice_array=(slice_array-slice_array.mean(dim=('time','x','z')))/(slice_array.std(dim=('time','x','z')))
+
     slice_array[target[0]]=target_slice
     slice_array=slice_array[var]
-    
 
-
-
-    if normalized==True:
-        slice_array=(slice_array-slice_array.mean())/(slice_array.std)()
-        slice_array=dask.compute(slice_array,retries=5)[0]
-    else:
-        slice_array=dask.compute(slice_array,retries=5)[0]
-
+    slice_array=dask.compute(slice_array,retries=5)[0]
     
     #shuffle the data, split into 3 parts and save
     train, validation, test = split_test_train_val(slice_array)

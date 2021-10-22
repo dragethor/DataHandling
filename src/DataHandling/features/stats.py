@@ -61,7 +61,7 @@ def get_valdata(quantity):
 
 def calc_stats(ds,save_spot):
     """
-    Calculates the stats and saves them in save_spot. Needs a running dask cluster
+    Calculates the time stats and saves them in save_spot. Needs a running dask cluster
 
     :param ds: dataset
     :param save_spot: where to save the calculated stats

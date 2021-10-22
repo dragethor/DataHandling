@@ -28,7 +28,7 @@ def get_plot_data(data):
     return feature_list,target_list,names
 
 
-
+#%%
 
 def heatmap(model_name,var,target,y_plus,normalize):
     import os
@@ -73,43 +73,42 @@ def heatmap(model_name,var,target,y_plus,normalize):
     predctions=[np.squeeze(x,axis=3) for x in predctions]
 
 
-
-    #%%
-
-
     #Plot of test, train, validation
     for i in range(3):
         plt.figure()
-        #TODO hvis der er mere end 1 feature skal der laves noget smart med subplots her
-        fig, axes=plt.subplots(1,3,sharex=True,sharey=True)
-        #cbar_ax = fig.add_axes([.91, 0.2, .04, .5])
+        #TODO Lavet et plot med features som ser lækkert ud
+        #TODO sat axer på plottet
+        #TODO lavet labels til colorbar
+        fig, axes=plt.subplots(1,2,sharex=True,sharey=True)
+        cbar_ax = fig.add_axes([.91, 0.25, .04, .5])
         axes[0].set_title('Target')
-        sns.heatmap(target_list[i][1,:,:],ax=axes[0],square=True,xticklabels=False,yticklabels=False,cmap="rocket")
+        
+        sns.heatmap(target_list[i][1,:,:],ax=axes[0],square=True,xticklabels=False,yticklabels=False,cmap="rocket",cbar_ax=cbar_ax)
         axes[1].set_title('Prediction')
-        sns.heatmap(predctions[i][1,:,:],ax=axes[1],square=True,xticklabels=False,yticklabels=False,cmap="rocket")
-        for feature in feature_list[i]:
-            axes[2].set_title('Feature ' + feature)
-            feature_var=feature_list[i][feature].numpy()
-            sns.heatmap(feature_var[1,:,:] ,ax=axes[2],square=True,xticklabels=False,yticklabels=False,cmap="rocket")
+        sns.heatmap(predctions[i][1,:,:],ax=axes[1],square=True,xticklabels=False,yticklabels=False,cmap="rocket",cbar_ax=cbar_ax)
+        # for feature in feature_list[i]:
+        #     axes[2].set_title('Feature ' + feature)
+        #     feature_var=feature_list[i][feature].numpy()
+        #     sns.heatmap(feature_var[1,:,:] ,ax=axes[2],square=True,xticklabels=True,yticklabels=True,cmap="rocket")
         
 
-        #fig.tight_layout(rect=[0, 0, .9, 1])
-        plt.savefig(os.path.join(output_path,names[i]+".pdf"),dpi=200,bbox_inches='tight',format='pdf')
+        fig.tight_layout(rect=[0, 0, .9, 1])
+        # plt.savefig(os.path.join(output_path,names[i]+".pdf"),dpi=100,bbox_inches='tight',format='pdf')
 
-        plt.figure()
-        sns.heatmap(predctions[i][1,:,:]-target_list[i][1,:,:],square=True,xticklabels=False,yticklabels=False,cmap="icefire")
-        plt.savefig(os.path.join(output_path,names[i]+"_difference"+".pdf"),dpi=200,bbox_inches='tight',format='pdf')
+        # plt.figure()
+        # sns.heatmap(predctions[i][1,:,:]-target_list[i][1,:,:],square=True,xticklabels=False,yticklabels=False,cmap="icefire")
+        # plt.savefig(os.path.join(output_path,names[i]+"_difference"+".pdf"),dpi=100,bbox_inches='tight',format='pdf')
 
 
     plt.figure()
-    keras.utils.plot_model(model,to_file=os.path.join(output_path,"network.png"),show_shapes=True,dpi=200)
+    keras.utils.plot_model(model,to_file=os.path.join(output_path,"network.png"),show_shapes=True,dpi=100)
     return None
 
 var=['u_vel']
 target=['tau_wall']
-normalize=False
+normalize=True
 y_plus=15
-model_name="solar-terrain-5"
+model_name="sweet-firefly-6"
 
 heatmap(model_name,var,target,y_plus,normalize)
 
