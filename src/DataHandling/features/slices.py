@@ -109,7 +109,7 @@ def load_from_scratch(y_plus,var,target,normalized,repeat=10,shuffle_size=100,ba
         dataset=dataset.shuffle(buffer_size=shuffle_size)
         dataset=dataset.repeat(repeat)
         dataset=dataset.batch(batch_size=batch_s)
-        dataset=dataset.prefetch(tf.data.experimental.AUTOTUNE)
+        dataset=dataset.prefetch(3)
         data.append(dataset)
     return data
 
@@ -219,10 +219,6 @@ def save_tf(y_plus,var,target,data,normalized=False):
             json.dump(load_dict,outfile)
 
 
-    #%%
-    #for name in var:
-            #load_dict[name] = tf.io.FixedLenFeature([], tf.string, default_value="")
-
     client, cluster =utility.slurm_q64(1)
 
     save_loc=slice_loc(y_plus,var,target,normalized)
@@ -234,10 +230,13 @@ def save_tf(y_plus,var,target,data,normalized=False):
     #select y_plus value and remove unessary components. Normalize if needed
 
     slice_array=data
+    Re = 10400 #Direct from simulation
+    nu = 1/Re #Kinematic viscosity
 
 
     if target[0]=='tau_wall':
         target_slice=slice_array['u_vel'].differentiate('y').sel(y=utility.y_plus_to_y(0),method="nearest")
+        target_slice=nu*target_slice
         if normalized==True:
             target_slice=(target_slice-target_slice.mean(dim=('time','x','z')))/(target_slice.std(dim=('time','x','z')))
     else:

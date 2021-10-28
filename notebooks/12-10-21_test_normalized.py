@@ -79,7 +79,6 @@ model.summary()
 model.compile(loss=loss, optimizer=optimizer)
 
 
-#%%
 
 logdir, backupdir= utility.get_run_dir(wandb.run.name)
 

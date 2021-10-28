@@ -30,12 +30,22 @@ from DataHandling.models import models
 
 var=['u_vel']
 target=['tau_wall']
-normalized=False
+normalized=True
 y_plus=15
 
 df=xr.open_zarr("/home/au643300/DataHandling/data/interim/data.zarr")
 
 
+
 slices.save_tf(15,var,target,df,normalized=normalized)
 
+
+
+
+var=['u_vel']
+target=['tau_wall']
+normalized=True
+y_plus=15
+
+slices.save_tf(15,var,target,df,normalized=False)
 

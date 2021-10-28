@@ -3,7 +3,7 @@ def get_data(data):
     """takes a TFrecord and returns list of features and targets for train, validation and test
 
     Args:
-        data (TFrecord): TFrecord dataset
+        data (TFrecord): list of TFrecord dataset
 
     Returns:
         (list, list, list): list of features, list of targets, and list of names
