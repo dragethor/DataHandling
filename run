@@ -5,10 +5,11 @@
 #SBATCH --mincpus=4
 #SBATCH --time=1-5:00:00
 #SBATCH --mem=25gb
-#SBATCH -p q64,q36,q24,
+#SBATCH -p q64,q36,q24
 
 source /home/${USER}/.bashrc
 conda activate tf_gpu
+
 # #srun python3 -u extractFeatures.py
 # #srun python3 -u mainSnapEval.py
 # #srun python3 -u mainPlanes.py

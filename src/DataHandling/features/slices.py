@@ -88,7 +88,7 @@ def load_from_scratch(y_plus,var,target,normalized,repeat=10,shuffle_size=100,ba
     save_loc=slice_loc(y_plus,var,target,normalized)
 
     if not os.path.exists(save_loc):
-        print("data does not exist. Make som new",flush=True)
+        raise Exception("data does not exist. Make som new")
 
 
     #copying the data to scratch
@@ -98,6 +98,8 @@ def load_from_scratch(y_plus,var,target,normalized,repeat=10,shuffle_size=100,ba
 
     features_dict=feature_description(save_loc)
 
+
+    
     splits=['train','validation','test']
 
     data=[]
@@ -239,6 +241,11 @@ def save_tf(y_plus,var,target,data,normalized=False):
         target_slice=nu*target_slice
         if normalized==True:
             target_slice=(target_slice-target_slice.mean(dim=('time','x','z')))/(target_slice.std(dim=('time','x','z')))
+    #Checking if the target contains _wall
+    elif target[0][-5:] =='_wall':
+        target_slice=slice_array[target[0][:-5]].sel(y=utility.y_plus_to_y(0),method="nearest")
+        if normalized==True:
+            target_slice=(target_slice-target_slice.mean(dim=('time','x','z')))/(target_slice.std(dim=('time','x','z')))
     else:
         target_slice=slice_array[target[0]].sel(y=utility.y_plus_to_y(0),method="nearest")
         if normalized==True:
@@ -249,6 +256,7 @@ def save_tf(y_plus,var,target,data,normalized=False):
     if normalized==True:
         slice_array=(slice_array-slice_array.mean(dim=('time','x','z')))/(slice_array.std(dim=('time','x','z')))
 
+    
     slice_array[target[0]]=target_slice
     slice_array=slice_array[var]
 
