@@ -314,8 +314,8 @@ def slice_loc(y_plus,var,target,normalized):
     """
     import os
     if normalized==True:
-        slice_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))+"_var"+str(len(var))+"_"+target[0]+"_normalized"
+        slice_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus)+"_var"+str(len(var))+"_"+str(target[0])+"_normalized")
     else:
-        slice_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus))+"_var"+str(len(var))+"_"+target[0]
+        slice_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus)+"_var"+str(len(var))+"_"+str(target[0]))
 
     return slice_loc

@@ -1,122 +1,95 @@
 
 
-def error(model_name,var,target,y_plus,normalize):
-    """Find the first and second order error between the prediction and the target for flucturations and predictions.
 
-    Args:
-        model_name (Wandb Name): Name given to run by wandb
-        var (list): list of variables without target
-        target (list): list of target
-        y_plus (int): y_plus value used for planes
-        normalize (bool): if the data is normalized or not
+def error(target_list,names,predctions,output_path):
+    from tensorflow import keras
+    import os
+    import numpy as np
+    import pandas as pd
+    import shutil
+    
 
-    Returns:
-        error (DataFrame): A Dataframe containing the first and second order error for both flucturations and mean
-    """
-    output_path='/home/au643300/DataHandling/models/output'
-    model_path=os.path.join("/home/au643300/DataHandling/models/trained/",model_name)
-    data_path=slices.slice_loc(y_plus,var,target,normalize)+"/"
-    data_folder=os.path.basename(os.path.dirname(data_path))
+    
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
 
-
-    data=slices.load_from_scratch(y_plus,var,target,normalized=normalize)
-    model=keras.models.load_model(model_path)
-
-
-    feature_list,target_list,names=utility.get_data(data)
-
-
-
-    predctions=[]
-    for features in feature_list:
-        predctions.append(model.predict(features))
-
-    predctions=[np.squeeze(x,axis=3) for x in predctions]
+ 
     
     
+    error=pd.DataFrame(columns=['Global Mean Error','Local Mean Error','Fluctuating Error global','Fluctuating Error Local','Fluctuating Error Std'])
+    error_fluc_list=[]
     
-    error=pd.DataFrame(columns=['1-order mean','1-order fluctuating','2-order mean','2-order fluctuating'])
-
-
     for i in range(3):
-
+        error_fluct=pd.DataFrame()
+        
+        
         fluc_predict=predctions[i][:,:,:]-np.mean(predctions[i][:,:,:])
         fluc_target=target_list[i][:,:,:]-np.mean(target_list[i][:,:,:])
         
-        mean_diff_1o=(np.mean(predctions[i][:,:,:]-target_list[i][:,:,:]))
-        err_mean_1o=mean_diff_1o/(np.mean(target_list[i][:,:,:]))*100
-        err_fluct_1o= np.mean(fluc_predict-fluc_target)/(np.std(fluc_target))
-        
-        mean_diff_2o=(np.mean(predctions[i][:,:,:]-target_list[i][:,:,:])**2)
-        err_mean_2o=mean_diff_2o/(np.mean(target_list[i][:,:,:])**2)*100
-        
-        err_fluct_2o= np.mean(fluc_predict-fluc_target)**2/(np.std(fluc_target)**2)
+        err_mean_global=(np.mean(predctions[i][:,:,:])-np.mean(target_list[i][:,:,:]))/(np.mean(target_list[i][:,:,:]))*100
+        err_mean_local_sqrt=np.sqrt((np.mean((predctions[i][:,:,:]-target_list[i][:,:,:])**2))/np.mean(target_list[i][:,:,:])**2)*100
 
-        error=error.append({'1-order mean':err_mean_1o,'1-order fluctuating':err_fluct_1o,'2-order mean':err_mean_2o,'2-order fluctuating':err_fluct_2o},ignore_index=True)
+        
+
+        err_fluc_sigma=(np.std(fluc_predict)-np.std(fluc_target))/(np.std(fluc_target))*100
+        err_fluc_loc_sqrt=np.sqrt((np.mean(fluc_predict-fluc_target)**2)/np.std(fluc_target)**2)*100
+
+        err_local_non_mean_sqrt=np.sqrt(((predctions[i][:,:,:]-target_list[i][:,:,:])**2)/np.mean(target_list[i][:,:,:])**2)*100
+        err_fluc_local_non_mean_sqrt=np.sqrt(((fluc_predict-fluc_target)**2)/np.std(fluc_target)**2)*100
+        
+        
+        error_fluct['Local Mean Error']=err_local_non_mean_sqrt.flatten()
+        error_fluct['Local fluct Error']=err_fluc_local_non_mean_sqrt.flatten()
+        
+        error_fluct.to_csv(os.path.join(output_path,'Error_fluct_'+names[i]+'.csv'))
+        error_fluc_list.append(error_fluct)
+        
+        error=error.append({'Global Mean Error':err_mean_global,'Local Mean Error':err_mean_local_sqrt,'Fluctuating Error Local':err_fluc_loc_sqrt,'Fluctuating Error Std':err_fluc_sigma},ignore_index=True)
 
     error.index=names
 
-    error.to_csv(os.path.join(output_path,model_name+'_'+data_folder))
+    error.to_csv(os.path.join(output_path,'Mean_error.csv'))
 
 
-    return error
+    return error_fluc_list, error
 
 
-
-def heatmaps(model_name,var,target,y_plus,normalize):
-    """Makes heatmaps of train,validation and test and compares them with the target. Also outputs the difference between prediciton and target
+def heatmaps(target_list,names,predctions,output_path,model_path,target):
+    """makes heatmaps of the Train validation and test data for target and prediction. Also plots the difference. Save to the output folder
 
     Args:
-        model_name (Wandb Name): Name given to run by wandb
-        var (list): list of variables without target
-        target (list): list of target
-        y_plus (int): y_plus value used for planes
-        normalize (bool): if the data is normalized or not
+        target_list (list): list of arrays of the target
+        names (list): list of names for the target_list
+        predctions (list): list of array of the prediction
+        output_path (Path): Path to the output folder
+        model_path (Path): Path to the saved model
+
+    Raises:
+        Exception: if the target has no defined plot name
+        Exception: Same as above
 
     Returns:
-        None: Saves the figures in the reports folder
+        None: 
     """
-    from DataHandling.utility import get_data
+    from DataHandling import utility
     from DataHandling.features import slices
     from tensorflow import keras
     import numpy as np
     import shutil
     import os
     import matplotlib.pyplot as plt
+    import seaborn as sns
 
-    model_path=os.path.join("/home/au643300/DataHandling/models/trained/",model_name)
-    output_path='/home/au643300/DataHandling/reports/figures'
-    data_path=slices.slice_loc(y_plus,var,target,normalize)+"/"
-    data_folder=os.path.basename(os.path.dirname(data_path))
-
-    output_path=os.path.join(output_path,model_name+'_'+data_folder)
-
-    data=slices.load_from_scratch(y_plus,var,target,normalized=normalize)
+    cm = 1/2.54  # centimeters in inches
 
 
     model=keras.models.load_model(model_path)
 
-
-
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-    else:
-        print('deleting old version')
-        shutil.rmtree(output_path)           
-        os.makedirs(output_path)
 
-    feature_list,target_list,names=get_data(data)
-
-
-    predctions=[]
-    for features in feature_list:
-        predctions.append(model.predict(features))
-
-    predctions=[np.squeeze(x,axis=3) for x in predctions]
 
     #Find highest and lowest value to scale plot to
-
-
     max_tot=0
     min_tot=1000
     for i in range(3):
@@ -130,69 +103,85 @@ def heatmaps(model_name,var,target,y_plus,normalize):
             min_tot=min_inter
 
 
-    fig, axs=plt.subplots(2,3,sharex=True,sharey=True,constrained_layout=False)
+    fig, axs=plt.subplots(2,3,figsize=([21*cm,10*cm]),sharex=True,sharey=True,constrained_layout=False,dpi=150)
+
     #To display the correct axis on the plot
-    axis_range=np.linspace(0,255,4)
-    x_axis_range=(axis_range-0)/(255-0)*(12-0)+0
+    axis_range_z=np.linspace(0,255,4)
+    axis_range_x=np.linspace(0,255,7)
+    x_axis_range=(axis_range_x-0)/(255-0)*(12-0)+0
     x_axis_range=np.round(x_axis_range).astype(int)
-    z_axis_range=(axis_range-0)/(255-0)*(6-0)+0
+    z_axis_range=(axis_range_z-0)/(255-0)*(6-0)+0
     z_axis_range=np.round(z_axis_range).astype(int)
     z_axis_range=np.flip(z_axis_range)
-    for i in range(3):     
+    for i in range(3):  
+
         #Target
-        pcm=axs[0,i].imshow(target_list[i][1,:,:],cmap='inferno',vmin=min_tot,vmax=max_tot)
+        pcm=axs[0,i].imshow(np.transpose(target_list[i][1,:,:]),cmap='viridis',vmin=min_tot,vmax=max_tot,aspect=0.5)
         axs[0,i].set_title(names[i].capitalize(),weight="bold")
         axs[0,0].set_ylabel(r'$z/h$')
         
         #prediction
-        axs[1,i].imshow(predctions[i][1,:,:],cmap='inferno',vmin=min_tot,vmax=max_tot)
+        axs[1,i].imshow(np.transpose(predctions[i][1,:,:]),cmap='viridis',vmin=min_tot,vmax=max_tot,aspect=0.5)
         axs[1,i].set_xlabel(r'$x/h$')
         axs[1,0].set_ylabel(r'$z/h$')
 
-        axs[1,i].set_xticks(axis_range)
+        axs[1,i].set_xticks(axis_range_x)
         axs[1,i].set_xticklabels(x_axis_range)
-        axs[0,0].set_yticks(axis_range)
+        axs[0,0].set_yticks(axis_range_z)
         axs[0,0].set_yticklabels(z_axis_range)
-        axs[1,0].set_yticks(axis_range)
+        axs[1,0].set_yticks(axis_range_z)
         axs[1,0].set_yticklabels(z_axis_range)
 
         
     #Setting labels and stuff
-    axs[0,0].text(-0.5, 0.30, 'Target',
+    axs[0,0].text(-0.23, 0.30, 'Target',
             verticalalignment='bottom', horizontalalignment='right',
             transform=axs[0,0].transAxes,rotation=90,weight="bold")
 
-    axs[1,0].text(-0.5, 0.20, 'Prediction',
+    axs[1,0].text(-0.23, 0.20, 'Prediction',
             verticalalignment='bottom', horizontalalignment='right',
             transform=axs[1,0].transAxes,rotation=90,weight="bold")
 
-    fig.subplots_adjust(wspace=-0.51,hspace=0.18)
+    fig.subplots_adjust(wspace=0.09,hspace=0.15)
     cbar=fig.colorbar(pcm,ax=axs[:,:],aspect=20,shrink=0.5,location="bottom")
     cbar.formatter.set_powerlimits((0, 0))
 
-    #TODO skal ændres sådan den ved om det er tau_wall eller andet som er på heatmap
-    cbar.ax.set_xlabel(r'$\tau_{wall } $',rotation=0)
-    fig.savefig(os.path.join(output_path,'target_prediction.pdf'),bbox_inches='tight',dpi=100,format='pdf')
+
+    if target[0]=='tau_wall':
+        cbar.ax.set_xlabel(r'$\tau_{wall } $',rotation=0)
+    elif target[0]=='pr1_wall':
+        cbar.ax.set_xlabel(r'$\Pr_{wall } $',rotation=0)
+    else: 
+        raise Exception('target name is not defined')
+
+    fig.savefig(os.path.join(output_path,'target_prediction.pdf'),bbox_inches='tight',format='pdf')
 
 
     max_diff=np.max([np.max(target_list[0][1,:,:]-predctions[0][1,:,:]),np.max(target_list[1][1,:,:]-predctions[1][1,:,:]),np.max(target_list[2][1,:,:]-predctions[2][1,:,:])])
     min_diff=np.min([np.min(target_list[0][1,:,:]-predctions[0][1,:,:]),np.min(target_list[1][1,:,:]-predctions[1][1,:,:]),np.min(target_list[2][1,:,:]-predctions[2][1,:,:])])
 
-    fig2, axs=plt.subplots(1,3,sharex=True,sharey=True,constrained_layout=True)
+    fig2, axs=plt.subplots(1,3,figsize=([21*cm,10*cm]),sharex=True,sharey=True,constrained_layout=False,dpi=150)
     for i in range(3):
         pcm=axs[i].imshow(target_list[i][1,:,:]-predctions[i][1,:,:],cmap="Spectral",vmin=min_diff,vmax=max_diff)
         axs[i].set_xlabel(r'$x/h$')
         axs[0].set_ylabel(r'$z/h$')
         axs[i].set_title(names[i].capitalize(),weight="bold")
-    cbar=fig.colorbar(pcm,ax=axs[:],aspect=15,shrink=0.5,location="bottom")
-    cbar.ax.set_xlabel(r'Difference $\tau_{wall } $',rotation=0)
+    fig2.subplots_adjust(wspace=0.09,hspace=0.05)
+    cbar=fig.colorbar(pcm,ax=axs[:],aspect=20,shrink=0.5,location="bottom")
     cbar.formatter.set_powerlimits((0, 0))
 
-    fig2.savefig(os.path.join(output_path,'difference.pdf'),bbox_inches='tight',dpi=200,format='pdf')
+    if target[0]=='tau_wall':
+        cbar.ax.set_xlabel(r'$\tau_{wall } $',rotation=0)
+    elif target[0]=='pr1_wall':
+        cbar.ax.set_xlabel(r'$\Pr_{wall } $',rotation=0)
+    else: 
+        raise Exception('target name is not defined')
 
+
+
+    fig2.savefig(os.path.join(output_path,'difference.pdf'),bbox_inches='tight',format='pdf')
     keras.utils.plot_model(model,to_file=os.path.join(output_path,"network.png"),show_shapes=True,dpi=100)
-
-
+    
     return None
 
 
@@ -317,89 +306,3 @@ def stat_plots(mean_dataset_loc,batches):
     plt.tight_layout()
     plt.savefig("/home/au643300/DataHandling/reports/figures/Pr_val.pdf", bbox_inches='tight')
 
-
-def get_plot_data(data):
-    
-   
-    feature_list=[]
-    target_list=[]
-
-    for data_type in data:
-        for i in data_type.take(1):
-           feature_list.append(i[0])
-           target_list.append(i[1].numpy())
-
-    
-    names=['train','validation','test']
-    return feature_list,target_list,names
-
-
-
-
-def heatmap(model_name,var,target,y_plus,normalize):
-    import os
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-    import numpy as np
-    from tensorflow import keras
-    from DataHandling.features import slices
-    import shutil
-
-
-
-    model_path=os.path.join("/home/au643300/DataHandling/models/trained/",model_name)
-    output_path='/home/au643300/DataHandling/reports/figures'
-    data_path=slices.slice_loc(y_plus,var,target,normalize)+"/"
-    data_folder=os.path.basename(os.path.dirname(data_path))
-
-    output_path=os.path.join(output_path,model_name+'_'+data_folder)
-
-    data=slices.load_from_scratch(y_plus,var,target,normalized=normalize)
-    
-    #TODO ændret det her sådan at den enten bruger h5 eller folder
-    model=keras.models.load_model(os.path.join(model_path,"model.h5"))
-
-
-
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-    else:
-        print('deleting old version')
-        shutil.rmtree(output_path)           
-        os.makedirs(output_path)
-
-    feature_list,target_list,names=get_plot_data(data)
-
-
-
-    predctions=[]
-    for features in feature_list:
-        predctions.append(model.predict(features))
-
-    predctions=[np.squeeze(x,axis=3) for x in predctions]
-
-
-
-    #%%
-
-
-    #Plot of test, train, validation
-    for i in range(3):
-        plt.figure()
-        fig, axes=plt.subplots(1,2,sharex=True,sharey=True)
-        cbar_ax = fig.add_axes([.91, 0.2, .04, .5])
-        axes[0].set_title('Target')
-        sns.heatmap(target_list[i][1,:,:],ax=axes[0],square=True,xticklabels=False,yticklabels=False,cmap="rocket",cbar_ax=cbar_ax)
-        axes[1].set_title('Prediction')
-        sns.heatmap(predctions[i][1,:,:],ax=axes[1],square=True,xticklabels=False,yticklabels=False,cmap="rocket",cbar_ax=cbar_ax)
-        fig.tight_layout(rect=[0, 0, .9, 1])
-        plt.savefig(os.path.join(output_path,names[i]+".pdf"),dpi=200,bbox_inches='tight',format='pdf')
-
-        plt.figure()
-        sns.heatmap(predctions[i][1,:,:]-target_list[i][1,:,:],square=True,xticklabels=False,yticklabels=False,cmap="icefire")
-        plt.savefig(os.path.join(output_path,names[i]+"_difference"+".pdf"),dpi=200,bbox_inches='tight',format='pdf')
-
-
-    plt.figure()
-    keras.utils.plot_model(model,to_file=os.path.join(output_path,"network.png"),show_shapes=True,dpi=200)
-    return None

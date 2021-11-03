@@ -1,5 +1,19 @@
 
-def get_data(data):
+def model_output_paths(model_name,y_plus,var,target,normalized):
+    import os
+    from DataHandling.features import slices
+
+    model_path=os.path.join("/home/au643300/DataHandling/models/trained/",model_name)
+    data_path=slices.slice_loc(y_plus,var,target,normalized)+"/"
+    data_folder=os.path.basename(os.path.dirname(data_path))
+    output_path='/home/au643300/DataHandling/models/output'
+    output_path=os.path.join(output_path,model_name)
+    output_path=os.path.join(output_path,data_folder)
+    
+    return model_path,output_path
+
+
+def get_data(model_name,y_plus,var,target,normalized):
     """takes a TFrecord and returns list of features and targets for train, validation and test
 
     Args:
@@ -8,7 +22,13 @@ def get_data(data):
     Returns:
         (list, list, list): list of features, list of targets, and list of names
     """
-    
+    from DataHandling.features import slices
+    import numpy as np
+    from tensorflow import keras
+
+    model_path,_=model_output_paths(model_name,y_plus,var,target,normalized)
+    data=slices.load_from_scratch(y_plus,var,target,normalized)
+
     feature_list=[]
     target_list=[]
 
@@ -17,9 +37,17 @@ def get_data(data):
            feature_list.append(i[0])
            target_list.append(i[1].numpy())
 
-    
     names=['train','validation','test']
-    return feature_list,target_list,names
+    
+    model=keras.models.load_model(model_path)
+    predctions=[]
+    for features in feature_list:
+        predctions.append(model.predict(features))
+
+    predctions=[np.squeeze(x,axis=3) for x in predctions]
+
+
+    return feature_list,target_list,predctions,names
 
 
 
