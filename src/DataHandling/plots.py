@@ -16,40 +16,45 @@ def error(target_list,names,predctions,output_path):
  
     
     
-    error=pd.DataFrame(columns=['Global Mean Error','Local Mean Error','Fluctuating Error global','Fluctuating Error Local','Fluctuating Error Std'])
+    error=pd.DataFrame(columns=['Global Mean Error','Local MSE','Local MAE','Fluctuating MSE','Fluctuating Error Std'])
     error_fluc_list=[]
     
     for i in range(3):
         error_fluct=pd.DataFrame()
-        
-        
+
         fluc_predict=predctions[i][:,:,:]-np.mean(predctions[i][:,:,:])
         fluc_target=target_list[i][:,:,:]-np.mean(target_list[i][:,:,:])
         
         err_mean_global=(np.mean(predctions[i][:,:,:])-np.mean(target_list[i][:,:,:]))/(np.mean(target_list[i][:,:,:]))*100
-        err_mean_local_sqrt=np.sqrt((np.mean((predctions[i][:,:,:]-target_list[i][:,:,:])**2))/np.mean(target_list[i][:,:,:])**2)*100
-
+        MSE_local=((np.mean((predctions[i][:,:,:]-target_list[i][:,:,:])**2))/np.mean(target_list[i][:,:,:])**2)*100
+        MAE_local=np.mean(np.abs(predctions[i][:,:,:]-target_list[i][:,:,:]))/np.mean(np.abs(target_list[i][:,:,:]))*100
         
 
         err_fluc_sigma=(np.std(fluc_predict)-np.std(fluc_target))/(np.std(fluc_target))*100
-        err_fluc_loc_sqrt=np.sqrt((np.mean(fluc_predict-fluc_target)**2)/np.std(fluc_target)**2)*100
+        MSE_local_fluc=((np.mean(fluc_predict-fluc_target)**2)/np.std(fluc_target)**2)*100
 
-        err_local_non_mean_sqrt=np.sqrt(((predctions[i][:,:,:]-target_list[i][:,:,:])**2)/np.mean(target_list[i][:,:,:])**2)*100
-        err_fluc_local_non_mean_sqrt=np.sqrt(((fluc_predict-fluc_target)**2)/np.std(fluc_target)**2)*100
+
+        MSE_local_no_mean=(((predctions[i][:,:,:]-target_list[i][:,:,:])**2)/(target_list[i][:,:,:])**2)*100
+        MSE_fluc_no_mean=(((fluc_predict-fluc_target)**2)/(fluc_target)**2)*100
         
+        MAE_local_no_mean=(np.abs(predctions[i][:,:,:]-target_list[i][:,:,:]))/(np.abs(target_list[i][:,:,:]))*100
+        MAE_fluct_no_mean=(np.abs(fluc_predict-fluc_target))/np.abs(fluc_target)*100
+
+        error_fluct['MSE local']=MSE_local_no_mean.flatten()
+        error_fluct['MSE fluct']=MSE_fluc_no_mean.flatten()
+        error_fluct['MAE local']=MAE_local_no_mean.flatten()
+        error_fluct['MAE fluct']=MAE_fluct_no_mean.flatten()
+
         
-        error_fluct['Local Mean Error']=err_local_non_mean_sqrt.flatten()
-        error_fluct['Local fluct Error']=err_fluc_local_non_mean_sqrt.flatten()
-        
+
         error_fluct.to_csv(os.path.join(output_path,'Error_fluct_'+names[i]+'.csv'))
         error_fluc_list.append(error_fluct)
         
-        error=error.append({'Global Mean Error':err_mean_global,'Local Mean Error':err_mean_local_sqrt,'Fluctuating Error Local':err_fluc_loc_sqrt,'Fluctuating Error Std':err_fluc_sigma},ignore_index=True)
+        error=error.append({'Global Mean Error':err_mean_global,'Local MAE':MAE_local,'Local MSE':MSE_local,'Fluctuating MSE':MSE_local_fluc,'Fluctuating Error Std':err_fluc_sigma},ignore_index=True)
 
     error.index=names
 
     error.to_csv(os.path.join(output_path,'Mean_error.csv'))
-
 
     return error_fluc_list, error
 

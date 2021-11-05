@@ -26,10 +26,6 @@ def error(target_list,names,predctions,output_path,model_path):
     
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-    else:
-        print('deleting old version')
-        shutil.rmtree(output_path)           
-        os.makedirs(output_path)
 
  
     
@@ -45,24 +41,30 @@ def error(target_list,names,predctions,output_path,model_path):
         fluc_target=target_list[i][:,:,:]-np.mean(target_list[i][:,:,:])
         
         err_mean_global=(np.mean(predctions[i][:,:,:])-np.mean(target_list[i][:,:,:]))/(np.mean(target_list[i][:,:,:]))*100
-        err_mean_local_sqrt=np.sqrt((np.mean((predctions[i][:,:,:]-target_list[i][:,:,:])**2))/np.mean(target_list[i][:,:,:])**2)*100
+        MSE_local=((np.mean((predctions[i][:,:,:]-target_list[i][:,:,:])**2))/np.mean(target_list[i][:,:,:])**2)*100
 
         
 
         err_fluc_sigma=(np.std(fluc_predict)-np.std(fluc_target))/(np.std(fluc_target))*100
-        err_fluc_loc_sqrt=np.sqrt((np.mean(fluc_predict-fluc_target)**2)/np.std(fluc_target)**2)*100
+        MSE_local_fluc=((np.mean(fluc_predict-fluc_target)**2)/np.std(fluc_target)**2)*100
 
-        err_local_non_mean_sqrt=np.sqrt(((predctions[i][:,:,:]-target_list[i][:,:,:])**2)/np.mean(target_list[i][:,:,:])**2)*100
-        err_fluc_local_non_mean_sqrt=np.sqrt(((fluc_predict-fluc_target)**2)/np.std(fluc_target)**2)*100
+        MSE_local_no_mean=(((predctions[i][:,:,:]-target_list[i][:,:,:])**2)/(target_list[i][:,:,:])**2)*100
+        MSE_fluc_no_mean=(((fluc_predict-fluc_target)**2)/(fluc_target)**2)*100
         
+        MAE_local_no_mean=(np.abs(predctions[i][:,:,:]-target_list[i][:,:,:]))/(target_list)
+        MAE_fluct_no_mean=(np.abs(fluc_predict-fluc_target))/fluc_target
+
+        error_fluct['MSE local']=MSE_local_no_mean.flatten()
+        error_fluct['MSE fluct']=MSE_fluc_no_mean.flatten()
+        error_fluct['MAE local']=MAE_local_no_mean.flatten()
+        error_fluct['MAE fluct']=MAE_fluct_no_mean.flatten()
+
         
-        error_fluct['Local Mean Error']=err_local_non_mean_sqrt.flatten()
-        error_fluct['Local fluct Error']=err_fluc_local_non_mean_sqrt.flatten()
-        
+
         error_fluct.to_csv(os.path.join(output_path,'Error_fluct_'+names[i]+'.csv'))
         error_fluc_list.append(error_fluct)
         
-        error=error.append({'Global Mean Error':err_mean_global,'Local Mean Error':err_mean_local_sqrt,'Fluctuating Error Local':err_fluc_loc_sqrt,'Fluctuating Error Std':err_fluc_sigma},ignore_index=True)
+        error=error.append({'Global Mean Error':err_mean_global,'Local MSE':MSE_local,'Fluctuating MSE':MSE_local_fluc,'Fluctuating Error Std':err_fluc_sigma},ignore_index=True)
 
     error.index=names
 
@@ -90,7 +92,7 @@ normalize=False
 dropout=False
 model_name="lively-monkey-15"
 
-feature_list,target_list,names=utility.get_data(y_plus,var,target,normalize)
+feature_list,target_list,names=utility.get_data(model_name,y_plus,var,target,normalize)
 
 #%%
 

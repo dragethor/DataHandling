@@ -177,7 +177,7 @@ def save_tf(y_plus,var,target,data,normalized=False):
             if type(feature) is np.ndarray:
                 feature_dict[name] = numpy_to_feature(feature)
             else:
-                print("other inputs that xarray/ numpy has not yet been defined")
+                raise Exception("other inputs that xarray/ numpy has not yet been defined")
         
         proto=tf.train.Example(features=tf.train.Features(feature=feature_dict))
         return proto.SerializeToString()
@@ -242,8 +242,10 @@ def save_tf(y_plus,var,target,data,normalized=False):
         if normalized==True:
             target_slice=(target_slice-target_slice.mean(dim=('time','x','z')))/(target_slice.std(dim=('time','x','z')))
     #Checking if the target contains _wall
-    elif target[0][-5:] =='_wall':
-        target_slice=slice_array[target[0][:-5]].sel(y=utility.y_plus_to_y(0),method="nearest")
+    elif target[0][-5:] =='_flux':
+        target_slice=slice_array[target[0][:-5]].differentiate('y').sel(y=utility.y_plus_to_y(0),method="nearest")
+        pr_number=float(target[0][2:-5])
+        target_slice=nu/(pr_number)*target_slice
         if normalized==True:
             target_slice=(target_slice-target_slice.mean(dim=('time','x','z')))/(target_slice.std(dim=('time','x','z')))
     else:

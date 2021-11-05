@@ -14,10 +14,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import dask
-import zarr
 import time
 from tensorflow import keras
-from tensorflow.keras import layers
 import tensorflow as tf
 import matplotlib.pyplot as pl
 import wandb
@@ -40,24 +38,29 @@ activation='elu'
 optimizer="adam"
 loss='mean_squared_error'
 patience=50
-var=['u_vel','pr1']
-target=['pr1_wall']
+var=['u_vel','pr0.71']
+target=['pr0.71_flux']
 normalized=False
 dropout=False
 data=slices.load_from_scratch(y_plus,var,target,normalized,repeat=repeat,shuffle_size=shuffle,batch_s=batch_size)
 train=data[0]
 validation=data[1]
 
-#%%
+
+
+
 model=models.baseline_cnn_multipel_inputs(var,activation)
 
 model.summary()
 
-keras.utils.plot_model(model,show_shapes=True,dpi=100)
+
+
+
+
 
 #%%
 #Wandb stuff
-wandb.init(project="Thesis",notes="First multipel inputs and heat!")
+wandb.init(project="Thesis",notes="First multipel inputs and heat flux!")
 config=wandb.config
 config.y_plus=y_plus
 config.repeat=repeat
@@ -82,8 +85,6 @@ model.compile(loss=loss, optimizer=optimizer)
 #%%
 
 logdir, backupdir= utility.get_run_dir(wandb.run.name)
-
-
 
 
 tensorboard_cb = keras.callbacks.TensorBoard(logdir)

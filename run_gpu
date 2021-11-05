@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=ML_train
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task 4
-#SBATCH --mincpus=4
-#SBATCH --time=1-0:00:00
-#SBATCH --mem=25gb
+#SBATCH --cpus-per-task 2
+#SBATCH --mincpus=2
+#SBATCH --time=1-10:00:00
+#SBATCH --mem=15gb
 #SBATCH -p q32g
 #SBATCH --gres gpu
 

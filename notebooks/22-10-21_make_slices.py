@@ -28,8 +28,8 @@ from DataHandling import utility
 from DataHandling.models import models
 
 
-var=['u_vel','pr1']
-target=['pr1_wall']
+var=['u_vel','pr0.71']
+target=['pr0.71_flux']
 normalized=False
 y_plus=15
 
