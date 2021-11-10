@@ -67,7 +67,8 @@ def calc_stats(ds,save_spot):
     :param save_spot: where to save the calculated stats
     :return: None
     """
-
+    import xarray as xr
+    import dask
     Re_Tau = 395  # Direct from simulation
     Re = 10400  # Direct from simulation
     nu = 1 / Re  # Kinematic viscosity
@@ -88,13 +89,11 @@ def calc_stats(ds,save_spot):
             mean=mean.drop(labels=val[0]+'_plusmean')
             mean=mean.drop(labels=val[0]+'_plusRMS')
             pr=float(val[2:])
-            theta_tau=(mean_tem.isel(y_plus=1)-mean_tem.isel(y_plus=0))/((mean_tem.y_plus[0]-mean_tem.y_plus[1])*pr)
+            theta_tau=mean_tem.differentiate('y')*pr
             theta_plus=mean_tem/theta_tau
             rms_pr=rms_tem/theta_tau
             mean[val+'_plusmean']=theta_plus
             mean[val+'_plusRMS']=rms_pr
         k=k+1
 
-    with dask.config.set(array_optimize=custom_optimize):
-        mean = dask.optimize(mean)[0]
-        mean.to_netcdf(save_spot)
+    mean.to_netcdf(save_spot)

@@ -25,7 +25,7 @@ import shutil
 from DataHandling import utility
 from DataHandling.models import models
 
-
+os.environ['WANDB_DISABLE_CODE']='True'
 
 #%%
 
@@ -38,7 +38,7 @@ activation='elu'
 optimizer="adam"
 loss='mean_squared_error'
 patience=50
-var=['u_vel','pr0.71']
+var=['u_vel']
 target=['pr0.71_flux']
 normalized=False
 dropout=False
@@ -48,12 +48,9 @@ validation=data[1]
 
 
 
-
 model=models.baseline_cnn_multipel_inputs(var,activation)
 
 model.summary()
-
-
 
 
 

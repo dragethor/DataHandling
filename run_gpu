@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=ML_train
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task 2
-#SBATCH --mincpus=2
+#SBATCH --cpus-per-task 4
+#SBATCH --mincpus=4
 #SBATCH --time=1-10:00:00
-#SBATCH --mem=15gb
+#SBATCH --mem=25gb
 #SBATCH -p q32g
-#SBATCH --gres gpu
+#SBATCH --gres=gpu:1
 
 
 
@@ -22,4 +22,5 @@ conda activate tf_gpu
 #srun python3 -u /home/au643300/DataHandling/notebooks/12-10-21_test_skip_connection.py
 #srun python3 -u /home/au643300/DataHandling/notebooks/12-10-21_test_normalized.py
 #srun python3 -u /home/au643300/DataHandling/notebooks/12-10-21_test_dropout.py
-srun python3 -u /home/au643300/DataHandling/notebooks/29_10_21_Heat_multipel_input.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/29_10_21_Heat_multipel_input.py
+srun python3 -u /home/au643300/DataHandling/notebooks/07-11-21_dropout_heat.py

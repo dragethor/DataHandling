@@ -33,7 +33,7 @@ def get_data(model_name,y_plus,var,target,normalized):
     target_list=[]
 
     for data_type in data:
-        for i in data_type.take(2):
+        for i in data_type.take(1):
            feature_list.append(i[0])
            target_list.append(i[1].numpy())
 
@@ -93,8 +93,8 @@ def slurm_q64(maximum_jobs,time='0-01:00:00',ram='50GB',cores=8):
                 walltime=time,
                 local_directory='/scratch/$SLURM_JOB_ID',
                 interface='ib0',
-                scheduler_options={'interface':'ib0'},
-                extra=["--lifetime", "50m"]
+                scheduler_options={'interface':'ib0'}
+                #extra=["--lifetime", "50m"]
                 )
     client=Client(cluster)
 

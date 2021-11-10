@@ -2,7 +2,7 @@
 
 
 
-def baseline_cnn(activation='elu'):
+def baseline_cnn(input_feature,activation='elu'):
     
     activation='elu'
     from tensorflow import keras
@@ -32,14 +32,14 @@ def baseline_cnn(activation='elu'):
     return model
 
 
-def baseline_cnn_dropout(activation='elu'):
+def baseline_cnn_dropout(input_feature,activation='elu'):
     
     
     from tensorflow import keras
     import tensorflow as tf
 
     weights=[128,256,256]
-    input=keras.layers.Input(shape=(256,256),name='u_vel')
+    input=keras.layers.Input(shape=(256,256),name=input_feature[0])
     reshape=keras.layers.Reshape((256,256,1))(input)
     batch=keras.layers.BatchNormalization(-1)(reshape)
     drop=keras.layers.Dropout(0.4)(batch)
@@ -67,14 +67,14 @@ def baseline_cnn_dropout(activation='elu'):
 
 
 
-def baseline_cnn_skip1(activation='elu'):
+def baseline_cnn_skip1(input_feature,activation='elu'):
     
     
     from tensorflow import keras
     import tensorflow as tf
 
     weights=[128,256,256]
-    input=keras.layers.Input(shape=(256,256),name='u_vel')
+    input=keras.layers.Input(shape=(256,256),name=input_feature)
     reshape=keras.layers.Reshape((256,256,1))(input)
     batch=keras.layers.BatchNormalization(-1)(reshape)
     cnn=keras.layers.Conv2D(64,5,activation=activation)(batch)

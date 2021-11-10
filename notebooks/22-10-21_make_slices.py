@@ -28,7 +28,7 @@ from DataHandling import utility
 from DataHandling.models import models
 
 
-var=['u_vel','pr0.71']
+var=['u_vel']
 target=['pr0.71_flux']
 normalized=False
 y_plus=15

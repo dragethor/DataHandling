@@ -221,7 +221,7 @@ def save_tf(y_plus,var,target,data,normalized=False):
             json.dump(load_dict,outfile)
 
 
-    client, cluster =utility.slurm_q64(1)
+    client, cluster =utility.slurm_q64(1,time='0-03:00:00')
 
     save_loc=slice_loc(y_plus,var,target,normalized)
     
