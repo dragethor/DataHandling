@@ -1,6 +1,7 @@
 
 
 def custom_optimize(dsk, keys):
+    import dask
     dsk = dask.optimization.inline(dsk, inline_constants=True)
     return dask.array.optimization.optimize(dsk, keys)
 

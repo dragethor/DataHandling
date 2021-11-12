@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=snapStat
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
-#SBATCH --mincpus=16
+#SBATCH --cpus-per-task=8
+#SBATCH --mincpus=8
 #SBATCH --time=1-10:00:00
 #SBATCH --mem=50gb
 #SBATCH -p q64,q36,q24
@@ -17,4 +17,4 @@ conda activate tf_gpu
 
 #srun python3 -u update_data.py
 #srun python3 -u "/home/au643300/DataHandling/notebooks/22-10-21_make_slices.py"
-srun python3 -u /home/au643300/DataHandling/notebooks/07-11-21_dropout_heat.py
+srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_1vary.py

@@ -31,12 +31,10 @@ def pdf_plots(error_fluc,names,output_path):
 
 
 
-def error(target_list,names,predctions,output_path):
-    from tensorflow import keras
+def error(target_list,target_type,names,predctions,output_path):
     import os
     import numpy as np
     import pandas as pd
-    import shutil
     
 
     
@@ -47,7 +45,7 @@ def error(target_list,names,predctions,output_path):
     
     if target_type=="stress":
         error=pd.DataFrame(columns=['Global Mean Error','Root mean sq. error of local shear stress','Global fluctuations error','Root mean sq. error of local fluctuations'])
-    elif target_type=="heat":
+    elif target_type=="flux":
         error=pd.DataFrame(columns=['Global Mean Error','Root mean sq. error of local heat flux','Global fluctuations error','Root mean sq. error of local fluctuations'])
     
     error_fluc_list=[]
@@ -81,8 +79,10 @@ def error(target_list,names,predctions,output_path):
 
         if target_type=="stress":
             error_fluct['Root sq. error of local shear stress']=MSE_local_no_mean.flatten()
-        elif target_type=="heat":
+            error=error.append({'Global Mean Error':global_mean_err,'Root mean sq. error of local shear stress':MSE_local_shear_stress,'Global fluctuations error':global_fluct_error,'Root mean sq. error of local fluctuations':MSE_local_fluc},ignore_index=True)
+        elif target_type=="flux":
             error_fluct['Root sq. error of local heat flux']=MSE_local_no_mean.flatten()
+            error=error.append({'Global Mean Error':global_mean_err,'Root mean sq. error of local shear stress':MSE_local_shear_stress,'Global fluctuations error':global_fluct_error,'Root mean sq. error of local fluctuations':MSE_local_fluc},ignore_index=True)
         error_fluct['Root sq. error of local fluctuations']=MSE_local_fluc_PDF.flatten()
         #error_fluct['MAE local']=MAE_local_no_mean.flatten()
         #error_fluct['MAE fluct']=MAE_fluct_no_mean.flatten()
@@ -92,10 +92,7 @@ def error(target_list,names,predctions,output_path):
         error_fluct.to_csv(os.path.join(output_path,'Error_fluct_'+names[i]+'.csv'))
         error_fluc_list.append(error_fluct)
         
-        if target_type=="stress":
-            error=error.append({'Global Mean Error':global_mean_err,'Root mean sq. error of local shear stress':MSE_local_shear_stress,'Global fluctuations error':global_fluct_error,'Root mean sq. error of local fluctuations':MSE_local_fluc},ignore_index=True)
-        elif target_type=="heat":
-            error=error.append({'Global Mean Error':global_mean_err,'Root mean sq. error of local shear stress':MSE_local_shear_stress,'Global fluctuations error':global_fluct_error,'Root mean sq. error of local fluctuations':MSE_local_fluc},ignore_index=True)
+
     
     error.index=names
 
@@ -244,7 +241,7 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
 
 
 def stat_plots(mean_dataset_loc,batches):
-    from DataHandling.features.read_valdata import get_valdata
+    from DataHandling.features.stats import get_valdata
     import matplotlib.pyplot as plt
     import xarray as xr
     import numpy as np

@@ -1,0 +1,21 @@
+{
+    "exclude": [
+      "**/node_modules",
+      "**/__pycache__",
+      "data/**",
+      "**/.ipynb_checkpoints/**",
+      "models/**",
+      "**/dask-worker-space/**",
+      "wandb/**"
+
+
+    ],
+    "ignore": [
+        "notebooks/Refractored/**"
+      ],
+  
+    "reportMissingImports": true,
+    "reportMissingTypeStubs": false,
+  
+    "pythonPlatform": "Linux",
+  }

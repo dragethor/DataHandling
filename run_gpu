@@ -3,10 +3,10 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task 4
 #SBATCH --mincpus=4
-#SBATCH --time=1-10:00:00
-#SBATCH --mem=25gb
+#SBATCH --time=0-18:00:00
+#SBATCH --mem=6gb
 #SBATCH -p q32g
-#SBATCH --gres=gpu:1
+#SBATCH --gres gpu
 
 
 
@@ -19,8 +19,8 @@ source /home/${USER}/.bashrc
 conda activate tf_gpu
 
 #srun python3 -u /home/au643300/DataHandling/notebooks/30_09_21_CNN_proper_transpose_elu.py
-#srun python3 -u /home/au643300/DataHandling/notebooks/12-10-21_test_skip_connection.py
-#srun python3 -u /home/au643300/DataHandling/notebooks/12-10-21_test_normalized.py
-#srun python3 -u /home/au643300/DataHandling/notebooks/12-10-21_test_dropout.py
-#srun python3 -u /home/au643300/DataHandling/notebooks/29_10_21_Heat_multipel_input.py
-srun python3 -u /home/au643300/DataHandling/notebooks/07-11-21_dropout_heat.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/07-11-21_dropout_heat.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_1vary.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_no_BN.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_sep.py
+srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_skip.py

@@ -2,26 +2,11 @@
 
 #%%
 import os
-from operator import ne
-import re
-from dask.base import optimize
-from dask_jobqueue import SLURMCluster
-from dask.distributed import Client, as_completed,wait,fire_and_forget, LocalCluster
-import glob
-import xarray as xr
-import seaborn as sns
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-import dask
-import time
 from tensorflow import keras
 import tensorflow as tf
-import matplotlib.pyplot as pl
 import wandb
 from wandb.keras import WandbCallback
 from DataHandling.features import slices
-import shutil
 from DataHandling import utility
 from DataHandling.models import models
 
@@ -95,11 +80,11 @@ model.compile(loss=loss, optimizer=optimizer)
 logdir, backupdir= utility.get_run_dir(wandb.run.name)
 
 
-tensorboard_cb = keras.callbacks.TensorBoard(logdir)
+
 backup_cb=tf.keras.callbacks.ModelCheckpoint(backupdir,save_best_only=True)
 early_stopping_cb = keras.callbacks.EarlyStopping(patience=patience,
 restore_best_weights=True)
-model.fit(x=train,epochs=100000,validation_data=validation,callbacks=[WandbCallback(),early_stopping_cb,backup_cb,tensorboard_cb])
+model.fit(x=train,epochs=100000,validation_data=validation,callbacks=[WandbCallback(),early_stopping_cb,backup_cb])
 
 model.save(os.path.join("/home/au643300/DataHandling/models/trained",wandb.run.name))
 
