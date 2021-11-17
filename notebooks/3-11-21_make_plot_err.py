@@ -12,7 +12,7 @@ from DataHandling.features import slices
 from DataHandling import utility
 from DataHandling.models import models
 from DataHandling import plots
-
+import xarray as xr
 
 
 
@@ -24,12 +24,14 @@ activation='elu'
 optimizer="adam"
 loss='mean_squared_error'
 patience=100
-var=['u_vel',]
+var=['u_vel']
 target=['tau_wall']
 target_type='stress'
 normalize=True
 dropout=False
-model_name="peach-rain-14"
+model_name="clean-plasma-48"
+
+
 
 
 #%%

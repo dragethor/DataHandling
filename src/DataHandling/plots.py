@@ -83,6 +83,7 @@ def error(target_list,target_type,names,predctions,output_path):
         elif target_type=="flux":
             error_fluct['Root sq. error of local heat flux']=MSE_local_no_mean.flatten()
             error=error.append({'Global Mean Error':global_mean_err,'Root mean sq. error of local shear stress':MSE_local_shear_stress,'Global fluctuations error':global_fluct_error,'Root mean sq. error of local fluctuations':MSE_local_fluc},ignore_index=True)
+        
         error_fluct['Root sq. error of local fluctuations']=MSE_local_fluc_PDF.flatten()
         #error_fluct['MAE local']=MAE_local_no_mean.flatten()
         #error_fluct['MAE fluct']=MAE_fluct_no_mean.flatten()

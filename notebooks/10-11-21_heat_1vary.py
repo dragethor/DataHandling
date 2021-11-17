@@ -24,7 +24,7 @@ os.environ['WANDB_DISABLE_CODE']='True'
 
 
 y_plus=15
-repeat=5
+repeat=3
 shuffle=100
 batch_size=10
 activation='elu'

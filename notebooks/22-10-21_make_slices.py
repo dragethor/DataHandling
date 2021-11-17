@@ -2,7 +2,7 @@
 
 #%%
 import os
-from operator import ne
+from operator import concat, ne
 import re
 from dask.base import optimize
 from dask_jobqueue import SLURMCluster
@@ -29,7 +29,7 @@ from DataHandling.models import models
 
 
 var=['u_vel']
-target=['pr0.71_flux']
+target=['tau_wall']
 normalized=False
 y_plus=15
 
@@ -37,8 +37,5 @@ df=xr.open_zarr("/home/au643300/DataHandling/data/interim/data.zarr")
 
 
 
-slices.save_tf(15,var,target,df,normalized=normalized)
-
-
-
+slices.save_tf(y_plus,var,target,df,normalized=normalized)
 

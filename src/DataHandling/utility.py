@@ -121,3 +121,21 @@ def y_plus_to_y(y_plus):
     return y
 
 
+def y_to_y_plus(y):
+    """Goes from specifed y value to a y_plus value
+
+    Args:
+        y (int): value of y_plus to find the corresponding y value from
+
+    Returns:
+        int: The y value of the y_plus location
+    """
+
+    Re_Tau = 395 #Direct from simulation
+    Re = 10400 #Direct from simulation
+    nu = 1/Re #Kinematic viscosity
+    u_tau = Re_Tau*nu
+    y_plus=y*u_tau/nu
+    return y_plus
+
+

@@ -9,7 +9,6 @@ from wandb.keras import WandbCallback
 from DataHandling.features import slices
 from DataHandling import utility
 from DataHandling.models import models
-
 os.environ['WANDB_DISABLE_CODE']='True'
 
 
@@ -33,11 +32,10 @@ optimizer="adam"
 loss='mean_squared_error'
 patience=50
 var=['u_vel']
-target=['pr0.71_flux']
+target=['tau_wall']
 normalized=False
 dropout=False
 skip=0
-BN=False
 data=slices.load_from_scratch(y_plus,var,target,normalized,repeat=repeat,shuffle_size=shuffle,batch_s=batch_size)
 train=data[0]
 validation=data[1]
@@ -45,7 +43,7 @@ validation=data[1]
 
 
 
-model=models.baseline_cnn_no_BN(var,activation)
+model=models.baseline_cnn(var,activation)
 
 model.summary()
 
@@ -54,8 +52,7 @@ model.summary()
 
 #%%
 #Wandb stuff
-wandb.init(project="Thesis",notes="heat with no BN")
-
+wandb.init(project="Thesis",notes="first test with both walls as traning")
 config=wandb.config
 config.y_plus=y_plus
 config.repeat=repeat
@@ -70,7 +67,6 @@ config.target=target[0]
 config.dropout=dropout
 config.normalized=normalized
 config.skip=skip
-config.BN=BN
 
 
 
