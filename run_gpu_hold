@@ -1,0 +1,29 @@
+#!/bin/bash
+#SBATCH --job-name=ML_train
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task 1
+#SBATCH --mincpus=1
+#SBATCH --time=6-00:00:00
+#SBATCH --mem=100mb
+#SBATCH -p q32g
+#SBATCH --gres gpu
+
+
+
+#  srun python3 -u extractFeatures.py
+# #srun python3 -u mainSnapEval.py
+# #srun python3 -u mainPlanes.py
+# #srun python3 -u mainSnapEval_stats.py
+#srun python3 -u for_run.py
+source /home/${USER}/.bashrc
+conda activate tf_gpu
+
+#srun python3 -u /home/au643300/DataHandling/notebooks/30_09_21_CNN_proper_transpose_elu.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/07-11-21_dropout_heat.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_1vary.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_no_BN.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_sep.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_skip.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/12-11-21_test_both_walls.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/16-11-21_fukiama_model.py
+srun python3 -u /home/au643300/DataHandling/notebooks/17-11-21_holdup.py

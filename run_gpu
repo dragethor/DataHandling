@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=ML_train
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task 3
-#SBATCH --mincpus=3
-#SBATCH --time=0-20:00:00
-#SBATCH --mem=15gb
+#SBATCH --cpus-per-task 2
+#SBATCH --mincpus=2
+#SBATCH --time=1-00:00:00
+#SBATCH --mem=10gb
 #SBATCH -p q32g
 #SBATCH --gres gpu
 
@@ -26,3 +26,4 @@ conda activate tf_gpu
 #srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_skip.py
 #srun python3 -u /home/au643300/DataHandling/notebooks/12-11-21_test_both_walls.py
 srun python3 -u /home/au643300/DataHandling/notebooks/16-11-21_fukiama_model.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/17-11-21_holdup.py

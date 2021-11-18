@@ -30,7 +30,7 @@ batch_size=10
 activation='elu'
 optimizer="adam"
 loss='mean_squared_error'
-patience=50
+patience=100
 var=['u_vel']
 target=['tau_wall']
 normalized=False
@@ -52,7 +52,7 @@ model.summary()
 
 #%%
 #Wandb stuff
-wandb.init(project="Thesis",notes="first test with both walls as traning")
+wandb.init(project="Thesis",notes="first test with both walls")
 config=wandb.config
 config.y_plus=y_plus
 config.repeat=repeat

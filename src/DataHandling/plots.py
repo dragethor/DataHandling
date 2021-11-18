@@ -82,7 +82,7 @@ def error(target_list,target_type,names,predctions,output_path):
             error=error.append({'Global Mean Error':global_mean_err,'Root mean sq. error of local shear stress':MSE_local_shear_stress,'Global fluctuations error':global_fluct_error,'Root mean sq. error of local fluctuations':MSE_local_fluc},ignore_index=True)
         elif target_type=="flux":
             error_fluct['Root sq. error of local heat flux']=MSE_local_no_mean.flatten()
-            error=error.append({'Global Mean Error':global_mean_err,'Root mean sq. error of local shear stress':MSE_local_shear_stress,'Global fluctuations error':global_fluct_error,'Root mean sq. error of local fluctuations':MSE_local_fluc},ignore_index=True)
+            error=error.append({'Global Mean Error':global_mean_err,'Root mean sq. error of local heat flux':MSE_local_shear_stress,'Global fluctuations error':global_fluct_error,'Root mean sq. error of local fluctuations':MSE_local_fluc},ignore_index=True)
         
         error_fluct['Root sq. error of local fluctuations']=MSE_local_fluc_PDF.flatten()
         #error_fluct['MAE local']=MAE_local_no_mean.flatten()
@@ -137,6 +137,24 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
         os.makedirs(output_path)
 
 
+    #change the scale to plus units
+    Re_Tau = 395 #Direct from simulation
+    Re = 10400 #Direct from simulation
+    nu = 1/Re #Kinematic viscosity
+    u_tau = Re_Tau*nu
+    
+    
+    if target[0]=='tau_wall':
+        y_plus_target_list=[]
+        for i in range(len(target_list)):
+            target_list[i]=target_list[i]/u_tau
+            predctions[i]=predctions[i]/u_tau        
+    elif target[0][-5:] =='_flux':
+        #Need to find the average surface heat flux Q_w
+        #Friction temp = Q_w/(u_tau)
+        #q^+= q/(Friction temp)
+
+
     #Find highest and lowest value to scale plot to
     max_tot=0
     min_tot=1000
@@ -158,20 +176,22 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
     axis_range_x=np.linspace(0,255,7)
     x_axis_range=(axis_range_x-0)/(255-0)*(12-0)+0
     x_axis_range=np.round(x_axis_range).astype(int)
+    x_axis_range=x_axis_range/u_tau
     z_axis_range=(axis_range_z-0)/(255-0)*(6-0)+0
     z_axis_range=np.round(z_axis_range).astype(int)
     z_axis_range=np.flip(z_axis_range)
+    z_axis_range=z_axis_range/u_tau
     for i in range(3):  
 
         #Target
         pcm=axs[0,i].imshow(np.transpose(target_list[i][1,:,:]),cmap='viridis',vmin=min_tot,vmax=max_tot,aspect=0.5)
         axs[0,i].set_title(names[i].capitalize(),weight="bold")
-        axs[0,0].set_ylabel(r'$z/h$')
+        axs[0,0].set_ylabel(r'$z^+$')
         
         #prediction
         axs[1,i].imshow(np.transpose(predctions[i][1,:,:]),cmap='viridis',vmin=min_tot,vmax=max_tot,aspect=0.5)
-        axs[1,i].set_xlabel(r'$x/h$')
-        axs[1,0].set_ylabel(r'$z/h$')
+        axs[1,i].set_xlabel(r'$x^+$')
+        axs[1,0].set_ylabel(r'$z^+$')
 
         axs[1,i].set_xticks(axis_range_x)
         axs[1,i].set_xticklabels(x_axis_range)
@@ -196,9 +216,9 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
 
 
     if target[0]=='tau_wall':
-        cbar.ax.set_xlabel(r'$\tau_{wall } $',rotation=0)
+        cbar.ax.set_xlabel(r'$\tau_{w}^{+} $',rotation=0)
     elif target[0]=='pr0.71_flux':
-        cbar.ax.set_xlabel(r'$\Pr_{wall} 0.71 $',rotation=0)
+        cbar.ax.set_xlabel(r'$q_w^+,\quad Pr=0.71$',rotation=0)
     else: 
         raise Exception('target name is not defined')
 
@@ -211,8 +231,8 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
     fig2, axs=plt.subplots(1,3,figsize=([21*cm,10*cm]),sharex=True,sharey=True,constrained_layout=False,dpi=150)
     for i in range(3):
         pcm=axs[i].imshow(target_list[i][1,:,:]-predctions[i][1,:,:],cmap="Spectral",vmin=min_diff,vmax=max_diff,aspect=0.5)
-        axs[i].set_xlabel(r'$x/h$')
-        axs[0].set_ylabel(r'$z/h$')
+        axs[i].set_xlabel(r'$x^+$')
+        axs[0].set_ylabel(r'$z^+$')
         axs[i].set_title(names[i].capitalize(),weight="bold")
         axs[i].set_xticks(axis_range_x)
         axs[i].set_xticklabels(x_axis_range)
@@ -224,9 +244,9 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
     cbar.formatter.set_powerlimits((0, 0))
 
     if target[0]=='tau_wall':
-        cbar.ax.set_xlabel(r'$\tau_{wall } $',rotation=0)
+        cbar.ax.set_xlabel(r'$\tau_{w}^{+} $',rotation=0)
     elif target[0]=='pr0.71_flux':
-        cbar.ax.set_xlabel(r'$\Pr_{wall} 0.71 $',rotation=0)
+        cbar.ax.set_xlabel(r'$q_w^+,\quad Pr=0.71$',rotation=0)
     else: 
         raise Exception('target name is not defined')
 
