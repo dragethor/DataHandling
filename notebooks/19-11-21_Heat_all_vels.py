@@ -32,13 +32,13 @@ os.environ['WANDB_DISABLE_CODE']='True'
 
 y_plus=15
 repeat=3
-shuffle=100
+shuffle=200
 batch_size=10
 activation='elu'
 optimizer="adam"
 loss='mean_squared_error'
 patience=50
-var=['u_vel']
+var=['u_vel','v_vel','w_vel']
 target=['pr0.71_flux']
 normalized=False
 dropout=False
@@ -57,7 +57,7 @@ model.summary()
 
 #%%
 #Wandb stuff
-wandb.init(project="Thesis",notes="First multipel inputs and heat flux!")
+wandb.init(project="Thesis",notes="Baseline all velocities")
 config=wandb.config
 config.y_plus=y_plus
 config.repeat=repeat

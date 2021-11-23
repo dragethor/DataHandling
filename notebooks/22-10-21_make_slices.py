@@ -1,41 +1,22 @@
 
 
 #%%
-import os
-from operator import concat, ne
-import re
-from dask.base import optimize
-from dask_jobqueue import SLURMCluster
-from dask.distributed import Client, as_completed,wait,fire_and_forget, LocalCluster
-import glob
-import xarray as xr
-import seaborn as sns
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-import dask
-import zarr
-import time
-from tensorflow import keras
-from tensorflow.keras import layers
-import tensorflow as tf
-import matplotlib.pyplot as pl
-import wandb
-from wandb.keras import WandbCallback
+
 from DataHandling.features import slices
-import shutil
-from DataHandling import utility
-from DataHandling.models import models
+import xarray as xr
 
 
-var=['u_vel']
-target=['tau_wall']
+var=['u_vel','v_vel','w_vel']
+var1=['u_vel','v_vel','w_vel','pr0.71']
+target=['pr0.71_flux']
 normalized=False
 y_plus=15
 
 df=xr.open_zarr("/home/au643300/DataHandling/data/interim/data.zarr")
 
 
+#%%
+
 
 slices.save_tf(y_plus,var,target,df,normalized=normalized)
-
+#slices.save_tf(y_plus,var1,target,df,normalized=normalized)

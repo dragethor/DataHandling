@@ -19,11 +19,6 @@ source /home/${USER}/.bashrc
 conda activate tf_gpu
 
 #srun python3 -u /home/au643300/DataHandling/notebooks/30_09_21_CNN_proper_transpose_elu.py
-#srun python3 -u /home/au643300/DataHandling/notebooks/07-11-21_dropout_heat.py
-#srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_1vary.py
-#srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_no_BN.py
-#srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_sep.py
-#srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_skip.py
-#srun python3 -u /home/au643300/DataHandling/notebooks/12-11-21_test_both_walls.py
-srun python3 -u /home/au643300/DataHandling/notebooks/16-11-21_fukiama_model.py
-#srun python3 -u /home/au643300/DataHandling/notebooks/17-11-21_holdup.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/19-11-21_fukiama_model_all_vels.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/19-11-21_Heat_all_vels.py
+srun python3 -u /home/au643300/DataHandling/notebooks/23-11-21_fukiama_model_bigger_network.py

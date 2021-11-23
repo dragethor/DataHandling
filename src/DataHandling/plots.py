@@ -145,11 +145,11 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
     
     
     if target[0]=='tau_wall':
-        y_plus_target_list=[]
         for i in range(len(target_list)):
             target_list[i]=target_list[i]/u_tau
             predctions[i]=predctions[i]/u_tau        
     elif target[0][-5:] =='_flux':
+        a=1
         #Need to find the average surface heat flux Q_w
         #Friction temp = Q_w/(u_tau)
         #q^+= q/(Friction temp)

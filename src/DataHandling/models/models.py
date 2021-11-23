@@ -2,9 +2,9 @@
 
 
 
+
 def baseline_cnn(input_feature,activation='elu'):
     
-    activation='elu'
     from tensorflow import keras
     import tensorflow as tf
 
@@ -132,7 +132,7 @@ def baseline_cnn_multipel_inputs(input_features,activation='elu'):
     batch=keras.layers.BatchNormalization(-1)(cnn)
     output=tf.keras.layers.Conv2DTranspose(1,1)(batch)
 
-    model = keras.Model(inputs=input_list, outputs=output, name="Multi input")
+    model = keras.Model(inputs=input_list, outputs=output)
     return model
 
 def baseline_cnn_sep(input_feature,activation='elu'):
@@ -188,3 +188,130 @@ def baseline_cnn_no_BN(input_feature,activation='elu'):
 
     model = keras.Model(inputs=input, outputs=output, name="No_BN")
     return model
+
+
+def fukiama_model(input_features,activation="elu"):
+    
+    from tensorflow import keras
+    import tensorflow as tf
+    from keras import layers
+    
+    input_list=[]
+    reshape_list=[]
+
+    for features in input_features:
+        input=keras.layers.Input(shape=(256,256),name=features)
+        input_list.append(input)
+        reshape=keras.layers.Reshape((256,256,1))(input)
+        reshape_list.append(reshape)
+    
+    conc=keras.layers.Concatenate()(reshape_list)
+
+    #Down sampled skip-connection model
+    down_1 = layers.MaxPooling2D((8,8),padding='same')(conc)
+    x1 = layers.Conv2D(32, (3,3),activation=activation, padding='same')(down_1)
+    x1 = layers.Conv2D(32, (3,3),activation=activation, padding='same')(x1)
+    x1 = layers.UpSampling2D((2,2))(x1)
+
+    down_2 = layers.MaxPooling2D((4,4),padding='same')(conc)
+    x2 = layers.Concatenate()([x1,down_2])
+    x2 = layers.Conv2D(32, (3,3),activation=activation, padding='same')(x2)
+    x2 = layers.Conv2D(32, (3,3),activation=activation, padding='same')(x2)
+    x2 = layers.UpSampling2D((2,2))(x2)
+
+    down_3 = layers.MaxPooling2D((2,2),padding='same')(conc)
+    x3 = layers.Concatenate()([x2,down_3])
+    x3 = layers.Conv2D(32, (3,3),activation=activation, padding='same')(x3)
+    x3 = layers.Conv2D(32, (3,3),activation=activation, padding='same')(x3)
+    x3 = layers.UpSampling2D((2,2))(x3)
+
+    x4 = layers.Concatenate()([x3,conc])
+    x4 = layers.Conv2D(32, (3,3),activation=activation, padding='same')(x4)
+    x4 = layers.Conv2D(32, (3,3),activation=activation, padding='same')(x4)
+
+    #Multi-scale model (Du et al., 2018)
+    layer_1 = layers.Conv2D(16, (5,5),activation=activation, padding='same')(conc)
+    x1m = layers.Conv2D(8, (5,5),activation=activation, padding='same')(layer_1)
+    x1m = layers.Conv2D(8, (5,5),activation=activation, padding='same')(x1m)
+
+    layer_2 = layers.Conv2D(16, (9,9),activation=activation, padding='same')(conc)
+    x2m = layers.Conv2D(8, (9,9),activation=activation, padding='same')(layer_2)
+    x2m = layers.Conv2D(8, (9,9),activation=activation, padding='same')(x2m)
+
+    layer_3 = layers.Conv2D(16, (13,13),activation=activation, padding='same')(conc)
+    x3m = layers.Conv2D(8, (13,13),activation=activation, padding='same')(layer_3)
+    x3m = layers.Conv2D(8, (13,13),activation=activation, padding='same')(x3m)
+
+    x_add = layers.Concatenate()([x1m,x2m,x3m,conc])
+    x4m = layers.Conv2D(8, (7,7),activation=activation,padding='same')(x_add)
+    x4m = layers.Conv2D(3, (5,5),activation=activation,padding='same')(x4m)
+
+    x_final = layers.Concatenate()([x4,x4m])
+    x_final = layers.Conv2D(1, (3,3),padding='same')(x_final)
+    model = keras.Model(input_list, x_final)  
+
+    return model  
+        
+
+
+def fukiama_model_more_filters(input_features,activation="elu"):
+    
+    from tensorflow import keras
+    import tensorflow as tf
+    from keras import layers
+    
+    input_list=[]
+    reshape_list=[]
+
+    for features in input_features:
+        input=keras.layers.Input(shape=(256,256),name=features)
+        input_list.append(input)
+        reshape=keras.layers.Reshape((256,256,1))(input)
+        reshape_list.append(reshape)
+    
+    conc=keras.layers.Concatenate()(reshape_list)
+
+    #Down sampled skip-connection model
+    down_1 = layers.MaxPooling2D((8,8),padding='same')(conc)
+    x1 = layers.Conv2D(64, (3,3),activation=activation, padding='same')(down_1)
+    x1 = layers.Conv2D(64, (3,3),activation=activation, padding='same')(x1)
+    x1 = layers.UpSampling2D((2,2))(x1)
+
+    down_2 = layers.MaxPooling2D((4,4),padding='same')(conc)
+    x2 = layers.Concatenate()([x1,down_2])
+    x2 = layers.Conv2D(64, (3,3),activation=activation, padding='same')(x2)
+    x2 = layers.Conv2D(64, (3,3),activation=activation, padding='same')(x2)
+    x2 = layers.UpSampling2D((2,2))(x2)
+
+    down_3 = layers.MaxPooling2D((2,2),padding='same')(conc)
+    x3 = layers.Concatenate()([x2,down_3])
+    x3 = layers.Conv2D(64, (3,3),activation=activation, padding='same')(x3)
+    x3 = layers.Conv2D(64, (3,3),activation=activation, padding='same')(x3)
+    x3 = layers.UpSampling2D((2,2))(x3)
+
+    x4 = layers.Concatenate()([x3,conc])
+    x4 = layers.Conv2D(64, (3,3),activation=activation, padding='same')(x4)
+    x4 = layers.Conv2D(64, (3,3),activation=activation, padding='same')(x4)
+
+    #Multi-scale model (Du et al., 2018)
+    layer_1 = layers.Conv2D(64, (5,5),activation=activation, padding='same')(conc)
+    x1m = layers.Conv2D(32, (5,5),activation=activation, padding='same')(layer_1)
+    x1m = layers.Conv2D(32, (5,5),activation=activation, padding='same')(x1m)
+
+    layer_2 = layers.Conv2D(64, (9,9),activation=activation, padding='same')(conc)
+    x2m = layers.Conv2D(32, (9,9),activation=activation, padding='same')(layer_2)
+    x2m = layers.Conv2D(32, (9,9),activation=activation, padding='same')(x2m)
+
+    layer_3 = layers.Conv2D(64, (13,13),activation=activation, padding='same')(conc)
+    x3m = layers.Conv2D(32, (13,13),activation=activation, padding='same')(layer_3)
+    x3m = layers.Conv2D(32, (13,13),activation=activation, padding='same')(x3m)
+
+    x_add = layers.Concatenate()([x1m,x2m,x3m,conc])
+    x4m = layers.Conv2D(32, (7,7),activation=activation,padding='same')(x_add)
+    x4m = layers.Conv2D(12, (5,5),activation=activation,padding='same')(x4m)
+
+    x_final = layers.Concatenate()([x4,x4m])
+    x_final = layers.Conv2D(1, (3,3),padding='same')(x_final)
+    model = keras.Model(input_list, x_final)  
+
+    return model  

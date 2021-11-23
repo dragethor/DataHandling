@@ -106,7 +106,7 @@ def load_from_scratch(y_plus,var,target,normalized,repeat=10,shuffle_size=100,ba
     for name in splits:
         data_loc=os.path.join(scratch,name)
         shutil.copy2(os.path.join(save_loc,name),data_loc)
-        dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP',buffer_size=100,num_parallel_reads=3)
+        dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP',buffer_size=100,num_parallel_reads=tf.data.experimental.AUTOTUNE)
         dataset=dataset.map(lambda x: read_tfrecords(x,features_dict,target),num_parallel_calls=tf.data.experimental.AUTOTUNE)
         dataset=dataset.shuffle(buffer_size=shuffle_size)
         dataset=dataset.repeat(repeat)
@@ -221,7 +221,7 @@ def save_tf(y_plus,var,target,data,normalized=False):
             json.dump(load_dict,outfile)
 
 
-    client, cluster =utility.slurm_q64(2,time='0-03:00:00')
+    client, cluster =utility.slurm_q64(1,time='0-03:00:00',ram='100GB')
 
     save_loc=slice_loc(y_plus,var,target,normalized)
     
@@ -240,26 +240,27 @@ def save_tf(y_plus,var,target,data,normalized=False):
         target_slice1=slice_array['u_vel'].differentiate('y').sel(y=utility.y_plus_to_y(0),method="nearest")
         target_slice1=nu*target_slice1
         
-        target_slice2=slice_array['u_vel'].differentiate('y').sel(y=slice_array['y'].max(),method="nearest")
-        target_slice2=nu*target_slice2
+        #target_slice2=slice_array['u_vel'].differentiate('y').sel(y=slice_array['y'].max(),method="nearest")
+        #target_slice2=nu*target_slice2
         
         if normalized==True:
             target_slice1=(target_slice1-target_slice1.mean(dim=('time','x','z')))/(target_slice1.std(dim=('time','x','z')))
-    #Checking if the target contains _wall
+    
+    #Checking if the target contains _flux
     elif target[0][-5:] =='_flux':
         target_slice1=slice_array[target[0][:-5]].differentiate('y').sel(y=utility.y_plus_to_y(0),method="nearest")
         pr_number=float(target[0][2:-5])
         target_slice1=nu/(pr_number)*target_slice1
         
-        target_slice2=slice_array[target[0][:-5]].differentiate('y').sel(y=slice_array['y'].max(),method="nearest")
-        target_slice2=nu/(pr_number)*target_slice2
+        #target_slice2=slice_array[target[0][:-5]].differentiate('y').sel(y=slice_array['y'].max(),method="nearest")
+        #target_slice2=nu/(pr_number)*target_slice2
         
         if normalized==True:
             target_slice1=(target_slice1-target_slice1.mean(dim=('time','x','z')))/(target_slice1.std(dim=('time','x','z')))
     else:
         target_slice1=slice_array[target[0]].sel(y=utility.y_plus_to_y(0),method="nearest")
 
-        target_slice2=slice_array[target[0]].sel(y=slice_array['y'].max(),method="nearest")
+        #target_slice2=slice_array[target[0]].sel(y=slice_array['y'].max(),method="nearest")
         if normalized==True:
             target_slice1=(target_slice1-target_slice1.mean(dim=('time','x','z')))/(target_slice1.std(dim=('time','x','z')))
 
@@ -276,17 +277,20 @@ def save_tf(y_plus,var,target,data,normalized=False):
     wall_1[target[0]]=target_slice1
     wall_1=wall_1[var]
 
-    wall_2=slice_array.sel(y=utility.y_plus_to_y(other_wall_y_plus),method="nearest")
-    wall_2[target[0]]=target_slice2
-    wall_2=wall_2[var]
+    #wall_2=slice_array.sel(y=utility.y_plus_to_y(other_wall_y_plus),method="nearest")
+    #wall_2[target[0]]=target_slice2
+    #wall_2=wall_2[var]
     
  
-    wall_1,wall_2=dask.compute(*[wall_1,wall_2])
+    #wall_1,wall_2=dask.compute(*[wall_1,wall_2])
 
-    
     #shuffle the data, split into 3 parts and save
     train_1, validation_1, test_1 = split_test_train_val(wall_1)
-    train_2, validation_2, test_2 = split_test_train_val(wall_2)
+
+    wall_1=wall_1.compute()
+    
+
+    #train_2, validation_2, test_2 = split_test_train_val(wall_2)
 
     if not os.path.exists(save_loc):
         os.makedirs(save_loc)
@@ -299,30 +303,30 @@ def save_tf(y_plus,var,target,data,normalized=False):
     options = tf.io.TFRecordOptions(compression_type="GZIP")
     with tf.io.TFRecordWriter(os.path.join(save_loc,'train'),options) as writer:
         for i in train_1:
-                write_d=serialize(wall_1.isel(time=i),var)
-                writer.write(write_d)
-        for i in train_2:
-                write_d=serialize(wall_2.isel(time=i),var)
-                writer.write(write_d)
+            write_d=serialize(wall_1.isel(time=i),var)
+            writer.write(write_d)
+        # for i in train_2:
+        #         write_d=serialize(wall_2.isel(time=i),var)
+        #         writer.write(write_d)
         writer.close()
 
 
     with tf.io.TFRecordWriter(os.path.join(save_loc,'test'),options) as writer:
         for i in test_1:
-                write_d=serialize(wall_1.isel(time=i),var)
-                writer.write(write_d)
-        for i in test_2:
-                write_d=serialize(wall_2.isel(time=i),var)
-                writer.write(write_d)
+            write_d=serialize(wall_1.isel(time=i),var)
+            writer.write(write_d)
+        # for i in test_2:
+        #         write_d=serialize(wall_2.isel(time=i),var)
+        #         writer.write(write_d)
         writer.close()
 
     with tf.io.TFRecordWriter(os.path.join(save_loc,'validation'),options) as writer:
         for i in validation_1:
-                write_d=serialize(wall_1.isel(time=i),var)
-                writer.write(write_d)
-        for i in validation_2:
-                write_d=serialize(wall_2.isel(time=i),var)
-                writer.write(write_d)    
+            write_d=serialize(wall_1.isel(time=i),var)
+            writer.write(write_d)
+        # for i in validation_2:
+        #         write_d=serialize(wall_2.isel(time=i),var)
+        #         writer.write(write_d)    
         writer.close()
 
 

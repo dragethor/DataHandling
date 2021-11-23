@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=ML_train
+#SBATCH --job-name=ML_train_h
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task 1
 #SBATCH --mincpus=1
