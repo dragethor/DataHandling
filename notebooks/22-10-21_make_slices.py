@@ -6,8 +6,8 @@ from DataHandling.features import slices
 import xarray as xr
 
 
-var=['u_vel','v_vel','w_vel']
-var1=['u_vel','v_vel','w_vel','pr0.71']
+
+var=['u_vel',"v_vel","w_vel","pr0.71"]
 target=['pr0.71_flux']
 normalized=False
 y_plus=15

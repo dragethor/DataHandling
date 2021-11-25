@@ -83,8 +83,8 @@ target/
 *.zarr
 wandb/
 run*/
-models/trained/
-
+models/backup/
+models/logs/
 # Mac OS-specific storage files
 .DS_Store
 

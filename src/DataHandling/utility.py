@@ -27,15 +27,14 @@ def get_data(model_name,y_plus,var,target,normalized):
     from tensorflow import keras
 
     model_path,_=model_output_paths(model_name,y_plus,var,target,normalized)
-    data=slices.load_from_scratch(y_plus,var,target,normalized)
+    data=slices.load_validation(y_plus,var,target,normalized)
 
     feature_list=[]
     target_list=[]
 
     for data_type in data:
-        for i in data_type.take(1):
-           feature_list.append(i[0])
-           target_list.append(i[1].numpy())
+        feature_list.append(data_type[0])
+        target_list.append(data_type[1].numpy())
 
     names=['train','validation','test']
     

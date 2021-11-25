@@ -60,7 +60,7 @@ def error(target_list,target_type,names,predctions,output_path):
         global_mean_err=(np.mean(predctions[i][:,:,:])-np.mean(target_list[i][:,:,:]))/(np.mean(target_list[i][:,:,:]))*100
         MSE_local_shear_stress=np.sqrt((np.mean((predctions[i][:,:,:]-target_list[i][:,:,:])**2))/np.mean(target_list[i][:,:,:])**2)*100
         global_fluct_error=(np.std(fluc_predict)-np.std(fluc_target))/(np.std(fluc_target))*100
-        MSE_local_fluc=np.sqrt((np.mean(fluc_predict-fluc_target)**2)/np.std(fluc_target)**2)*100
+        MSE_local_fluc=np.sqrt((np.mean((fluc_predict-fluc_target)**2))/np.std(fluc_target)**2)*100
 
         
 
@@ -142,6 +142,7 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
     Re = 10400 #Direct from simulation
     nu = 1/Re #Kinematic viscosity
     u_tau = Re_Tau*nu
+    Q_avg=0.665
     
     
     if target[0]=='tau_wall':
@@ -149,7 +150,10 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
             target_list[i]=target_list[i]/u_tau
             predctions[i]=predctions[i]/u_tau        
     elif target[0][-5:] =='_flux':
-        a=1
+        fric_temp=Q_avg/u_tau
+        for i in range(len(target_list)):
+            target_list[i]=target_list[i]/fric_temp
+            predctions[i]=predctions[i]/fric_temp  
         #Need to find the average surface heat flux Q_w
         #Friction temp = Q_w/(u_tau)
         #q^+= q/(Friction temp)
@@ -175,12 +179,10 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
     axis_range_z=np.linspace(0,255,4)
     axis_range_x=np.linspace(0,255,7)
     x_axis_range=(axis_range_x-0)/(255-0)*(12-0)+0
-    x_axis_range=np.round(x_axis_range).astype(int)
-    x_axis_range=x_axis_range/u_tau
+    x_axis_range=np.round(x_axis_range/u_tau).astype(int)
     z_axis_range=(axis_range_z-0)/(255-0)*(6-0)+0
-    z_axis_range=np.round(z_axis_range).astype(int)
     z_axis_range=np.flip(z_axis_range)
-    z_axis_range=z_axis_range/u_tau
+    z_axis_range=np.round(z_axis_range/u_tau).astype(int)
     for i in range(3):  
 
         #Target

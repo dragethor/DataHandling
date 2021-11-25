@@ -30,7 +30,7 @@ batch_size=10
 activation='elu'
 optimizer="adam"
 loss='mean_squared_error'
-patience=50
+patience=100
 var=['u_vel','v_vel','w_vel']
 target=['pr0.71_flux']
 normalized=False
@@ -67,7 +67,7 @@ config.target=target[0]
 config.dropout=dropout
 config.normalized=normalized
 config.skip=skip
-
+config.model="fukiama"
 
 
 model.compile(loss=loss, optimizer=optimizer)
@@ -79,7 +79,7 @@ logdir, backupdir= utility.get_run_dir(wandb.run.name)
 
 
 
-backup_cb=tf.keras.callbacks.ModelCheckpoint(backupdir,save_best_only=True)
+backup_cb=tf.keras.callbacks.ModelCheckpoint(os.path.join(backupdir,'weights.{epoch:02d}'),save_best_only=False)
 early_stopping_cb = keras.callbacks.EarlyStopping(patience=patience,
 restore_best_weights=True)
 model.fit(x=train,epochs=100000,validation_data=validation,callbacks=[WandbCallback(),early_stopping_cb,backup_cb])

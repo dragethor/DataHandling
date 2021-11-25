@@ -1,7 +1,7 @@
 
 
 
-
+import tensorflow as tf
 
 
 def feature_description(save_loc):
@@ -114,6 +114,72 @@ def load_from_scratch(y_plus,var,target,normalized,repeat=10,shuffle_size=100,ba
         dataset=dataset.prefetch(3)
         data.append(dataset)
     return data
+
+
+
+def load_validation(y_plus,var,target,normalized):
+
+      
+    import tensorflow as tf
+    import os
+    import shutil
+    
+    save_loc=slice_loc(y_plus,var,target,normalized)
+
+    if not os.path.exists(save_loc):
+        raise Exception("data does not exist. Make som new")
+
+
+    #copying the data to scratch
+    scratch=os.path.join('/scratch/', os.environ['SLURM_JOB_ID'])
+    #shutil.copytree(save_loc,scratch)
+    #print("copying data to scratch")
+
+    features_dict=feature_description(save_loc)
+
+
+    data_unorder=[]
+
+    #validation
+    data_loc=os.path.join(scratch,'validation')
+    shutil.copy2(os.path.join(save_loc,'validation'),data_loc)
+    dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP',buffer_size=100,num_parallel_reads=tf.data.experimental.AUTOTUNE)
+    dataset=dataset.map(lambda x: read_tfrecords(x,features_dict,target),num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    dataset=dataset.take(-1)
+    dataset=dataset.cache()
+    len_data_val=len(list(dataset))
+    dataset=dataset.batch(len_data_val)
+    dataset=dataset.get_single_element()
+    data_unorder.append(dataset)
+
+    #train
+    data_loc=os.path.join(scratch,'train')
+    shutil.copy2(os.path.join(save_loc,'train'),data_loc)
+    dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP',buffer_size=100,num_parallel_reads=tf.data.experimental.AUTOTUNE)
+    dataset=dataset.map(lambda x: read_tfrecords(x,features_dict,target),num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    dataset=dataset.take(len_data_val)
+    dataset=dataset.batch(len_data_val)
+    dataset=dataset.get_single_element()
+    data_unorder.append(dataset)    
+    
+    
+    
+    #test
+    data_loc=os.path.join(scratch,'test')
+    shutil.copy2(os.path.join(save_loc,'test'),data_loc)
+    dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP',buffer_size=100,num_parallel_reads=tf.data.experimental.AUTOTUNE)
+    dataset=dataset.map(lambda x: read_tfrecords(x,features_dict,target),num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    dataset=dataset.take(-1)
+    dataset=dataset.cache()
+    len_data_test=len(list(dataset))
+    dataset=dataset.batch(len_data_test)
+    dataset=dataset.get_single_element()
+    data_unorder.append(dataset)
+
+    data=[data_unorder[1],data_unorder[0],data_unorder[2]]
+
+    return data
+    
 
 
 

@@ -3,7 +3,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task 2
 #SBATCH --mincpus=2
-#SBATCH --time=1-00:00:00
+#SBATCH --time=0-18:00:00
 #SBATCH --mem=10gb
 #SBATCH -p q32g
 #SBATCH --gres gpu
@@ -21,4 +21,6 @@ conda activate tf_gpu
 #srun python3 -u /home/au643300/DataHandling/notebooks/30_09_21_CNN_proper_transpose_elu.py
 #srun python3 -u /home/au643300/DataHandling/notebooks/19-11-21_fukiama_model_all_vels.py
 #srun python3 -u /home/au643300/DataHandling/notebooks/19-11-21_Heat_all_vels.py
-srun python3 -u /home/au643300/DataHandling/notebooks/23-11-21_fukiama_model_bigger_network.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/19-11-21_fukiama_model_all_vels.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/23-11-21_fukiama_model_bigger_network.py
+srun python3 -u /home/au643300/DataHandling/notebooks/25-11-21_heat_all_vels_plus_pr.py
