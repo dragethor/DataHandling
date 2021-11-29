@@ -31,7 +31,7 @@ def get_data(model_name,y_plus,var,target,normalized):
 
     feature_list=[]
     target_list=[]
-
+    
     for data_type in data:
         feature_list.append(data_type[0])
         target_list.append(data_type[1].numpy())

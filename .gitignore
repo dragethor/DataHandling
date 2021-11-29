@@ -65,6 +65,7 @@ target/
 # Database
 *.db
 *.rdb
+*.npz
 
 # Pycharm
 .idea
@@ -91,6 +92,10 @@ models/logs/
 # vim
 *.swp
 *.swo
+
+#big csv files
+Error_fluct_*
+
 
 # Mypy cache
 .mypy_cache/

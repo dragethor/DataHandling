@@ -35,23 +35,12 @@ def error(target_list,target_type,names,predctions,output_path):
     import os
     import numpy as np
     import pandas as pd
-    
+    from numba import njit
 
     
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-
- 
-    
-    if target_type=="stress":
-        error=pd.DataFrame(columns=['Global Mean Error','Root mean sq. error of local shear stress','Global fluctuations error','Root mean sq. error of local fluctuations'])
-    elif target_type=="flux":
-        error=pd.DataFrame(columns=['Global Mean Error','Root mean sq. error of local heat flux','Global fluctuations error','Root mean sq. error of local fluctuations'])
-    
-    error_fluc_list=[]
-    
-    for i in range(3):
-        error_fluct=pd.DataFrame()
+    @njit(cache=True)
+    def cal_func(i,target_list,predctions):
+        
         fluc_predict=predctions[i][:,:,:]-np.mean(predctions[i][:,:,:])
         fluc_target=target_list[i][:,:,:]-np.mean(target_list[i][:,:,:])
         
@@ -75,7 +64,30 @@ def error(target_list,target_type,names,predctions,output_path):
         MSE_local_no_mean=np.sqrt(((predctions[i][:,:,:]-target_list[i][:,:,:])**2)/np.mean(target_list[i][:,:,:])**2)*100
         MSE_local_fluc_PDF=np.sqrt(((fluc_predict-fluc_target)**2)/(np.std(fluc_target))**2)*100
         
+        return MSE_local_no_mean,global_mean_err,MSE_local_fluc_PDF,MSE_local_shear_stress,global_fluct_error,MSE_local_fluc
+
+
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
+ 
+    
+    if target_type=="stress":
+        error=pd.DataFrame(columns=['Global Mean Error','Root mean sq. error of local shear stress','Global fluctuations error','Root mean sq. error of local fluctuations'])
+    elif target_type=="flux":
+        error=pd.DataFrame(columns=['Global Mean Error','Root mean sq. error of local heat flux','Global fluctuations error','Root mean sq. error of local fluctuations'])
+    
+    error_fluc_list=[]
+    
+    
+
+
+    
+    for i in range(3):
+        error_fluct=pd.DataFrame()
         
+        MSE_local_no_mean,global_mean_err,MSE_local_fluc_PDF,MSE_local_shear_stress,global_fluct_error,MSE_local_fluc=cal_func(i,target_list,predctions)
+
 
         if target_type=="stress":
             error_fluct['Root sq. error of local shear stress']=MSE_local_no_mean.flatten()

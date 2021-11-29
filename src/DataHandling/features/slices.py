@@ -123,7 +123,7 @@ def load_validation(y_plus,var,target,normalized):
     import tensorflow as tf
     import os
     import shutil
-    
+    from DataHandling.features.slices import slice_loc,feature_description,read_tfrecords
     save_loc=slice_loc(y_plus,var,target,normalized)
 
     if not os.path.exists(save_loc):
@@ -157,9 +157,11 @@ def load_validation(y_plus,var,target,normalized):
     shutil.copy2(os.path.join(save_loc,'train'),data_loc)
     dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP',buffer_size=100,num_parallel_reads=tf.data.experimental.AUTOTUNE)
     dataset=dataset.map(lambda x: read_tfrecords(x,features_dict,target),num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    dataset=dataset.take(len_data_val)
     dataset=dataset.batch(len_data_val)
-    dataset=dataset.get_single_element()
+    #dataset=dataset.batch(10)
+    dataset=dataset.take(1)
+    for i in dataset:
+        dataset=i
     data_unorder.append(dataset)    
     
     
@@ -169,8 +171,6 @@ def load_validation(y_plus,var,target,normalized):
     shutil.copy2(os.path.join(save_loc,'test'),data_loc)
     dataset = tf.data.TFRecordDataset([data_loc],compression_type='GZIP',buffer_size=100,num_parallel_reads=tf.data.experimental.AUTOTUNE)
     dataset=dataset.map(lambda x: read_tfrecords(x,features_dict,target),num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    dataset=dataset.take(-1)
-    dataset=dataset.cache()
     len_data_test=len(list(dataset))
     dataset=dataset.batch(len_data_test)
     dataset=dataset.get_single_element()
@@ -368,6 +368,7 @@ def save_tf(y_plus,var,target,data,normalized=False):
 
     options = tf.io.TFRecordOptions(compression_type="GZIP")
     with tf.io.TFRecordWriter(os.path.join(save_loc,'train'),options) as writer:
+        print('train',flush=True)
         for i in train_1:
             write_d=serialize(wall_1.isel(time=i),var)
             writer.write(write_d)
@@ -378,6 +379,7 @@ def save_tf(y_plus,var,target,data,normalized=False):
 
 
     with tf.io.TFRecordWriter(os.path.join(save_loc,'test'),options) as writer:
+        print('test',flush=True)
         for i in test_1:
             write_d=serialize(wall_1.isel(time=i),var)
             writer.write(write_d)
@@ -387,6 +389,7 @@ def save_tf(y_plus,var,target,data,normalized=False):
         writer.close()
 
     with tf.io.TFRecordWriter(os.path.join(save_loc,'validation'),options) as writer:
+        print('validation',flush=True)
         for i in validation_1:
             write_d=serialize(wall_1.isel(time=i),var)
             writer.write(write_d)
@@ -414,9 +417,15 @@ def slice_loc(y_plus,var,target,normalized):
         str: string of file save location
     """
     import os
+
+    var_sort=sorted(var)
+    var_string="_".join(var_sort)
+    target_sort=sorted(target)
+    target_string="_".join(target_sort)
+
     if normalized==True:
-        slice_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus)+"_var"+str(len(var))+"_"+str(target[0])+"_normalized")
+        slice_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus)+"-VARS"+str(len(var))+"-"+var_string+"_TARGETS-"+target_string+"-normalized")
     else:
-        slice_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus)+"_var"+str(len(var))+"_"+str(target[0]))
+        slice_loc=os.path.join("/home/au643300/DataHandling/data/processed",'y_plus_'+str(y_plus)+"-VARS"+str(len(var))+"-"+var_string+"-TARGETS-"+target_string)
 
     return slice_loc
