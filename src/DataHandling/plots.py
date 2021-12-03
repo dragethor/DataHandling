@@ -21,13 +21,17 @@ def pdf_plots(error_fluc,names,output_path):
         cm =1/2.54
         fig, ax = plt.subplots(1, 1,figsize=(20*cm,20*cm),dpi=200)
         sns.boxplot(data=error_fluc[i],showfliers = False,orient='h',ax=ax)
+        
         fig.savefig(os.path.join(output_path,names[i]+'_boxplot.pdf'),bbox_inches='tight',format='pdf')
+        plt.clf()
 
+        
         plt.figure(figsize=(20*cm,10*cm),dpi=200)
-        sns.histplot(data=error_fluc[i],stat='density',kde=True,log_scale=True)
+        sns.kdeplot(data=error_fluc[i].sample(frac=0.3,ignore_index=True),log_scale=True)
+        #sns.histplot(data=error_fluc[i],stat='density',kde=True,log_scale=True)
         plt.xlim(1*10**(-2),1*10**(3))
         plt.savefig(os.path.join(output_path,names[i]+'_PDF.pdf'),bbox_inches='tight',format='pdf')
-
+        plt.clf()
 
 
 
@@ -37,8 +41,7 @@ def error(target_list,target_type,names,predctions,output_path):
     import pandas as pd
     from numba import njit
 
-    
-    @njit(cache=True)
+    @njit(cache=True,parallel=True)    
     def cal_func(i,target_list,predctions):
         
         fluc_predict=predctions[i][:,:,:]-np.mean(predctions[i][:,:,:])
@@ -143,7 +146,7 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
     cm = 1/2.54  # centimeters in inches
 
 
-    model=keras.models.load_model(model_path)
+ 
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
@@ -267,7 +270,6 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
 
 
     fig2.savefig(os.path.join(output_path,'difference.pdf'),bbox_inches='tight',format='pdf')
-    keras.utils.plot_model(model,to_file=os.path.join(output_path,"network.png"),show_shapes=True,dpi=100)
     
     return None
 

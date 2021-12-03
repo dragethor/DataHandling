@@ -10,6 +10,16 @@ from DataHandling.features import slices
 import os
 import wandb
 import sys
+import shutil
+
+
+
+os.environ['TF_ENABLE_ONEDNN_OPTS']='1'
+
+
+
+slurm_arrary_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
+overwrite=False
 
 api = wandb.Api()
 entity, project = "dragethor", "Thesis"  # set to your entity and project
@@ -31,10 +41,7 @@ for run in runs:
         name_list.append(run.name)
 
 
-slurm_arrary_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
-
-overwrite=False
 
 
 #%%
@@ -62,14 +69,18 @@ model_path,output_path=utility.model_output_paths(model_name,y_plus,var,target,n
 
 print("Model "+ model_name,flush=True)
 
-#%%
+
+if not os.path.exists(output_path):
+    os.makedirs(output_path)
+elif os.path.exists(os.path.join(output_path,'targets.npz')) and overwrite==False:
+    raise Exception("Data exists and overwrite is set to false. Exiting")
+elif os.path.exists(os.path.join(output_path,'targets.npz')) and overwrite==True:
+    print("deleting folder",flush=True)
+    shutil.rmtree(output_path)
+
+
+
 data=slices.load_validation(y_plus,var,target,normalized)
-
-
-#Så skal kun lave og gemme predictions for test og validation. Behøver ikke at gemme hverken target eller features!
-
-#%%
-
 
 feature_list=[]
 target_list=[]
@@ -80,30 +91,18 @@ for data_type in data:
 
 
 
-
-#%%
-if not os.path.exists(output_path):
-    os.makedirs(output_path)
-elif os.path.exists(output_path) and overwrite==False:
-    Exception("Data exists and overwrite is set to false. Exiting")
-
-
-#%%
 model=keras.models.load_model(model_path)
 
 predctions=[]
 
 predctions.append(model.predict(feature_list[0]))
-#%%
+
+
 predctions.append(model.predict(feature_list[1]))
 
-#%%
+
 predctions.append(model.predict(feature_list[2]))
 
-
-
-# for features in feature_list:
-#     predctions.append(model.predict(features))
 
 predctions=[np.squeeze(x,axis=3) for x in predctions]
 
