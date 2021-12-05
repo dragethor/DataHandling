@@ -105,7 +105,7 @@ def error(target_list,target_type,names,predctions,output_path):
 
         
 
-        error_fluct.to_csv(os.path.join(output_path,'Error_fluct_'+names[i]+'.csv'))
+        error_fluct.to_parquet(os.path.join(output_path,'Error_fluct_'+names[i]+'.parquet'))
         error_fluc_list.append(error_fluct)
         
 
@@ -162,13 +162,25 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
     
     if target[0]=='tau_wall':
         for i in range(len(target_list)):
-            target_list[i]=target_list[i]/u_tau
-            predctions[i]=predctions[i]/u_tau        
+            target_list[i]=target_list[i][1,:,:]/u_tau
+            predctions[i]=predctions[i][1,:,:]/u_tau        
+
+            #cut the data to 1/4
+            target_list[i]=target_list[i][128,128]
+            predctions[i]=predctions[i][128,128]
+            
+
+    
     elif target[0][-5:] =='_flux':
         fric_temp=Q_avg/u_tau
         for i in range(len(target_list)):
-            target_list[i]=target_list[i]/fric_temp
-            predctions[i]=predctions[i]/fric_temp  
+            target_list[i]=target_list[i][1,:,:]/Q_avg
+            predctions[i]=predctions[i][1,:,:]/Q_avg  
+
+            #cut the data to 1/4
+            target_list[i]=target_list[i][128,128]
+            predctions[i]=predctions[i][128,128]
+
         #Need to find the average surface heat flux Q_w
         #Friction temp = Q_w/(u_tau)
         #q^+= q/(Friction temp)
@@ -178,8 +190,8 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
     max_tot=0
     min_tot=1000
     for i in range(3):
-        max_inter=np.max([np.max(target_list[i][1,:,:]),np.max(predctions[i][1,:,:])])
-        min_inter=np.min([np.min(target_list[i][1,:,:]),np.min(predctions[i][1,:,:])])
+        max_inter=np.max([np.max(target_list[i]),np.max(predctions[i])])
+        min_inter=np.min([np.min(target_list[i]),np.min(predctions[i])])
         
         
         if max_inter>max_tot:
@@ -190,23 +202,35 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
 
     fig, axs=plt.subplots(2,3,figsize=([21*cm,10*cm]),sharex=True,sharey=True,constrained_layout=False,dpi=150)
 
+
+    #TODO lavet det her om så akserne passer på den 1/4 cut jeg har lavet
+    
+    #max length in plus units
+    x_plus_max=12*u_tau/nu
+    z_plus_max=6*u_tau/nu
+
+
     #To display the correct axis on the plot
-    axis_range_z=np.linspace(0,255,4)
+    
+
+
     axis_range_x=np.linspace(0,255,7)
     x_axis_range=(axis_range_x-0)/(255-0)*(12-0)+0
     x_axis_range=np.round(x_axis_range/u_tau).astype(int)
+    
+    axis_range_z=np.linspace(0,255,4)
     z_axis_range=(axis_range_z-0)/(255-0)*(6-0)+0
     z_axis_range=np.flip(z_axis_range)
-    z_axis_range=np.round(z_axis_range/u_tau).astype(int)
+    z_axis_range=np.round(z_axis_range*u_tau/nu).astype(int)
     for i in range(3):  
 
         #Target
-        pcm=axs[0,i].imshow(np.transpose(target_list[i][1,:,:]),cmap='viridis',vmin=min_tot,vmax=max_tot,aspect=0.5)
+        pcm=axs[0,i].imshow(np.transpose(target_list[i]),cmap='viridis',vmin=min_tot,vmax=max_tot,aspect=0.5)
         axs[0,i].set_title(names[i].capitalize(),weight="bold")
         axs[0,0].set_ylabel(r'$z^+$')
         
         #prediction
-        axs[1,i].imshow(np.transpose(predctions[i][1,:,:]),cmap='viridis',vmin=min_tot,vmax=max_tot,aspect=0.5)
+        axs[1,i].imshow(np.transpose(predctions[i]),cmap='viridis',vmin=min_tot,vmax=max_tot,aspect=0.5)
         axs[1,i].set_xlabel(r'$x^+$')
         axs[1,0].set_ylabel(r'$z^+$')
 
@@ -242,12 +266,12 @@ def heatmaps(target_list,names,predctions,output_path,model_path,target):
     fig.savefig(os.path.join(output_path,'target_prediction.pdf'),bbox_inches='tight',format='pdf')
 
 
-    max_diff=np.max([np.max(target_list[0][1,:,:]-predctions[0][1,:,:]),np.max(target_list[1][1,:,:]-predctions[1][1,:,:]),np.max(target_list[2][1,:,:]-predctions[2][1,:,:])])
-    min_diff=np.min([np.min(target_list[0][1,:,:]-predctions[0][1,:,:]),np.min(target_list[1][1,:,:]-predctions[1][1,:,:]),np.min(target_list[2][1,:,:]-predctions[2][1,:,:])])
+    max_diff=np.max([np.max(target_list[0]-predctions[0]),np.max(target_list[1]-predctions[1]),np.max(target_list[2]-predctions[2])])
+    min_diff=np.min([np.min(target_list[0]-predctions[0]),np.min(target_list[1]-predctions[1]),np.min(target_list[2]-predctions[2])])
 
     fig2, axs=plt.subplots(1,3,figsize=([21*cm,10*cm]),sharex=True,sharey=True,constrained_layout=False,dpi=150)
     for i in range(3):
-        pcm=axs[i].imshow(target_list[i][1,:,:]-predctions[i][1,:,:],cmap="Spectral",vmin=min_diff,vmax=max_diff,aspect=0.5)
+        pcm=axs[i].imshow(target_list[i]-predctions[i],cmap="Spectral",vmin=min_diff,vmax=max_diff,aspect=0.5)
         axs[i].set_xlabel(r'$x^+$')
         axs[0].set_ylabel(r'$z^+$')
         axs[i].set_title(names[i].capitalize(),weight="bold")

@@ -37,26 +37,25 @@ subdirs=os.listdir(full_dir)
 print('This is model ' + model,flush=True)
 
 for dir in subdirs:
-    dir_split=dir.split("-")
+    dir_split = dir.split("-")
 
-    y_plus=int(dir_split[0][-2:])
+    y_plus = int(dir_split[0][-2:])
 
-    index_vars_s=dir_split.index("VARS")
-    index_target=dir_split.index("TARGETS")
+    index_vars_s = dir_split.index("VARS")
+    index_target = dir_split.index("TARGETS")
 
-
-    var=dir_split[index_vars_s+1:index_target]
-    target=dir_split[index_target+1:]
+    var = dir_split[index_vars_s+1:index_target]
+    target = dir_split[index_target+1:]
     if "normalized" not in dir_split:
-        normalize=False
+        normalize = False
     else:
-        normalize=True
-        target=target[:-1]
+        normalize = True
+        target = target[:-1]
 
-    if target[0][-5:] =='_flux':
-        target_type="flux"
-    elif target[0]=='tau_wall':
-        target_type="stress"
+    if target[0][-5:] == '_flux':
+        target_type = "flux"
+    elif target[0] == 'tau_wall':
+        target_type = "stress"
 
     model_path, output_path =utility.model_output_paths(model,y_plus,var,target,normalize)
 
@@ -111,9 +110,20 @@ for dir in subdirs:
                 if overwrite==True:
                     plots.pdf_plots(error_fluc,names,output_path)
             else:
-                train_csv=pd.read_csv(os.path.join(output_path,'Error_fluct_train.csv'))
-                val_csv=pd.read_csv(os.path.join(output_path,'Error_fluct_validation.csv'))
-                test_csv=pd.read_csv(os.path.join(output_path,'Error_fluct_test.csv'))
+                train1=pd.read_csv(os.path.join(output_path,'Error_fluct_train.csv'))
+                val1=pd.read_csv(os.path.join(output_path,'Error_fluct_validation.csv'))
+                test1=pd.read_csv(os.path.join(output_path,'Error_fluct_test.csv'))
+                
+                train1.to_parquet(os.path.join(output_path,'Error_fluct_'+"train"+'.parquet'))
+                val1.to_parquet(os.path.join(output_path,'Error_fluct_'+"validation"+'.parquet'))
+                test1.to_parquet(os.path.join(output_path,'Error_fluct_'+"test"+'.parquet'))
+
+                os.remove(os.path.join(output_path,'Error_fluct_train.csv'))
+                os.remove(os.path.join(output_path,'Error_fluct_validation.csv'))
+                os.remove(os.path.join(output_path,'Error_fluct_test.csv'))
+                #train_csv=pd.read_parquet(os.path.join(output_path,'Error_fluct_train.csv'))
+                #val_csv=pd.read_parquet(os.path.join(output_path,'Error_fluct_validation.csv'))
+                #test_csv=pd.read_parquet(os.path.join(output_path,'Error_fluct_test.csv'))
                 #plots.pdf_plots([train_csv,val_csv,test_csv],names,output_path)
 
         print("done with " +model,flush=True)
@@ -130,7 +140,7 @@ import KDEpy
 #Root sq. error of local heat flux
 #'Root sq. error of local fluctuations'
 
-# x_grid = np.linspace(-1, 1000, num=2**10)
+# x_grid = np.linspace(0, 1000, num=2**10)
 # x_fluct, y_fluct = KDEpy.FFTKDE(bw='ISJ', kernel='gaussian').fit(val_csv['Root sq. error of local fluctuations'].to_numpy(), weights=None).evaluate(x_grid)
 # x_local, y_local = KDEpy.FFTKDE(bw='ISJ', kernel='gaussian').fit(val_csv['Root sq. error of local heat flux'].to_numpy(), weights=None).evaluate(x_grid)
 
