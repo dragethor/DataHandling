@@ -23,4 +23,5 @@ conda activate tf_gpu
 #srun python3 -u /home/au643300/DataHandling/notebooks/19-11-21_Heat_all_vels.py
 #srun python3 -u /home/au643300/DataHandling/notebooks/19-11-21_fukiama_model_all_vels.py
 #srun python3 -u /home/au643300/DataHandling/notebooks/23-11-21_fukiama_model_bigger_network.py
-srun python3 -u /home/au643300/DataHandling/notebooks/25-11-21_heat_all_vels_plus_pr.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/25-11-21_heat_all_vels_plus_pr.py
+srun python3 -u /home/au643300/DataHandling/notebooks/06-12-21_final_model_all_vels_and_heat.py
