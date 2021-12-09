@@ -46,10 +46,10 @@ name_list, config_list = utility.get_runs_wandb()
 
 
 model_name=name_list[slurm_arrary_id]
-
+#model_name=name_list[1]
 
 config=config_list[slurm_arrary_id]
-
+#config=config_list[1]
 
 y_plus=config['y_plus']
 

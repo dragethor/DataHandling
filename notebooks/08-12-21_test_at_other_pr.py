@@ -5,19 +5,21 @@ from DataHandling.features import slices
 from DataHandling import utility
 from tensorflow import keras
 from DataHandling.models import predict
-
+import os
 
 
 name_list, config_list = utility.get_runs_wandb()
 
 overwrite=False
 
+slurm_arrary_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
+
 #%%
 
-name=name_list[0]
-config=config_list[0]
+name=name_list[slurm_arrary_id]
+config=config_list[slurm_arrary_id]
 
-pr_numbers=['pr0.025',"pr0.2","pr0.025"]
+pr_numbers=['pr0.025',"pr0.2","pr1"]
 
 if config['target']=="pr0.71_flux":
     
@@ -32,9 +34,9 @@ if config['target']=="pr0.71_flux":
     #now change the target and vars to other pr
     for pr_number in pr_numbers:
         target=[pr_number+"_flux"]
-    if any(vars=="pr0.71"):
-        pr_var_index=vars.index("pr0.71")
-        vars[pr_var_index]=pr_number
+        if "pr0.71" in vars:
+            pr_var_index=vars.index("pr0.71")
+            vars[pr_var_index]=pr_number
 
         #predict at the other pr numbers and save the data
         predict.predict(name,overwrite,model,y_plus,vars,target,normalize)

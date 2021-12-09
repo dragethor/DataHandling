@@ -70,13 +70,13 @@ def error(target_list,target_type,names,predctions,output_path):
     @njit(cache=True,parallel=True)    
     def cal_func(target_list,predctions):
         
-        fluc_predict=predctions[:,:,:]-np.mean(predctions[:,:,:])
-        fluc_target=target_list[:,:,:]-np.mean(target_list[:,:,:])
+        fluc_predict=predctions-np.mean(predctions)
+        fluc_target=target_list-np.mean(target_list)
         
 
         #Global average errors
-        global_mean_err=(np.mean(predctions[:,:,:])-np.mean(target_list[:,:,:]))/(np.mean(target_list[:,:,:]))*100
-        MSE_local_shear_stress=np.sqrt((np.mean((predctions[:,:,:]-target_list[:,:,:])**2))/np.mean(target_list[:,:,:])**2)*100
+        global_mean_err=(np.mean(predctions)-np.mean(target_list))/(np.mean(target_list))*100
+        MSE_local_shear_stress=np.sqrt((np.mean((predctions-target_list)**2))/np.mean(target_list)**2)*100
         global_fluct_error=(np.std(fluc_predict)-np.std(fluc_target))/(np.std(fluc_target))*100
         MSE_local_fluc=np.sqrt((np.mean((fluc_predict-fluc_target)**2))/np.std(fluc_target)**2)*100
 
@@ -90,7 +90,7 @@ def error(target_list,target_type,names,predctions,output_path):
         
 
         #Local erros for PDF's and boxplots etc.
-        MSE_local_no_mean=np.sqrt(((predctions[:,:,:]-target_list[:,:,:])**2)/np.mean(target_list[:,:,:])**2)*100
+        MSE_local_no_mean=np.sqrt(((predctions-target_list)**2)/np.mean(target_list)**2)*100
         MSE_local_fluc_PDF=np.sqrt(((fluc_predict-fluc_target)**2)/(np.std(fluc_target))**2)*100
         
         return MSE_local_no_mean,global_mean_err,MSE_local_fluc_PDF,MSE_local_shear_stress,global_fluct_error,MSE_local_fluc
@@ -115,7 +115,7 @@ def error(target_list,target_type,names,predctions,output_path):
     for i in range(3):
         error_fluct=pd.DataFrame()
         
-        MSE_local_no_mean,global_mean_err,MSE_local_fluc_PDF,MSE_local_shear_stress,global_fluct_error,MSE_local_fluc=cal_func(target_list,predctions)
+        MSE_local_no_mean,global_mean_err,MSE_local_fluc_PDF,MSE_local_shear_stress,global_fluct_error,MSE_local_fluc=cal_func(target_list[i],predctions[i])
 
 
         if target_type=="stress":

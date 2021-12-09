@@ -287,7 +287,7 @@ def save_tf(y_plus,var,target,data,normalized=False):
             json.dump(load_dict,outfile)
 
 
-    client, cluster =utility.slurm_q64(1,time='0-03:00:00',ram='100GB')
+    client, cluster =utility.slurm_q64(1,time='0-01:30:00',ram='50GB')
 
     save_loc=slice_loc(y_plus,var,target,normalized)
     
@@ -401,6 +401,7 @@ def save_tf(y_plus,var,target,data,normalized=False):
 
     save_load_dict(var,save_loc)
     client.close()
+    del wall_1
     return None
 
 

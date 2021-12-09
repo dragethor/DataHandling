@@ -19,10 +19,11 @@ import matplotlib.pyplot as plt
 #importlib.reload(plots)
 
 overwrite=False
-overwrite_pics=True
-path_of_output="/home/au643300/DataHandling/models/output"
-model_names=[ f.name for f in os.scandir(path_of_output) if f.is_dir() ]
+overwrite_pics=False
 
+
+path_of_output="/home/au643300/DataHandling/models/output"
+name_list, _ = utility.get_runs_wandb()
 
 slurm_arrary_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
@@ -30,9 +31,8 @@ slurm_arrary_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 #%%
 
 
-
-model=model_names[slurm_arrary_id]
-#model=model_names[0]
+model=name_list[slurm_arrary_id]
+#model=name_list[0]
 
 full_dir=os.path.join(path_of_output,model)
 subdirs=os.listdir(full_dir)
@@ -86,16 +86,6 @@ for dir in subdirs:
 
             names=["train","validation","test"]
 
-            if os.path.exists(os.path.join(output_path,"target_prediction.pdf")):
-                if overwrite==True or overwrite_pics==True:
-                    plots.heatmap_quarter(predctions,target_list,output_path,target)
-                else:
-                    print('heatmaps allready exist and overwrite is false',flush=True) 
-            else:
-                plots.heatmap_quarter(predctions,target_list,output_path,target)
-
-
-
             if os.path.exists(os.path.join(output_path,"Error_fluct_test.parquet")):
                 if overwrite==True:
                     error_fluc,err= plots.error(target_list,target_type,names,predctions,output_path) 
@@ -120,6 +110,16 @@ for dir in subdirs:
                 val=pd.read_parquet(os.path.join(output_path,'Error_fluct_validation.parquet'))
                 test=pd.read_parquet(os.path.join(output_path,'Error_fluct_test.parquet'))
                 plots.pdf_plots([train,val,test],names,output_path,target_type)
+
+            
+            if os.path.exists(os.path.join(output_path,"target_prediction.pdf")):
+                if overwrite==True or overwrite_pics==True:
+                    plots.heatmap_quarter(predctions,target_list,output_path,target)
+                else:
+                    print('heatmaps allready exist and overwrite is false',flush=True) 
+            else:
+                plots.heatmap_quarter(predctions,target_list,output_path,target)
+
 
         print("done with " +model,flush=True)
 

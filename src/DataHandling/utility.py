@@ -113,7 +113,7 @@ def slurm_q64(maximum_jobs,time='0-01:00:00',ram='50GB',cores=8):
     
     cluster=SLURMCluster(cores=cores,
                 memory=ram,
-                queue='q64,q36',
+                queue='q64,q36,q24',
                 walltime=time,
                 local_directory='/scratch/$SLURM_JOB_ID',
                 interface='ib0',
