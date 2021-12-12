@@ -14,10 +14,20 @@ overwrite=False
 
 slurm_arrary_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
-#%%
+
 
 name=name_list[slurm_arrary_id]
 config=config_list[slurm_arrary_id]
+
+#name=name_list[0]
+#config=config_list[0]
+
+print("This is " + name,flush=True)
+
+
+
+
+#%%
 
 pr_numbers=['pr0.025',"pr0.2","pr1"]
 
@@ -25,22 +35,29 @@ if config['target']=="pr0.71_flux":
     
     #first load the model
     y_plus=int(config['y_plus'])
-    vars=config['variables']
-    target=config['target']
+    vars=sorted(config['variables'])
+    target=[config['target']]
     normalize=config['normalized']
     model_path, _ =utility.model_output_paths(name,y_plus,vars,target,normalize)
     model=keras.models.load_model(model_path)
+    
+    #Predict for standart config as well
+    print("testing at " + str(vars) +"Target " +str(target), flush=True)
+    predict.predict(name,overwrite,model,y_plus,vars,target,normalize)
+
 
     #now change the target and vars to other pr
     for pr_number in pr_numbers:
         target=[pr_number+"_flux"]
-        if "pr0.71" in vars:
-            pr_var_index=vars.index("pr0.71")
-            vars[pr_var_index]=pr_number
-
+        if vars[0][:2]=="pr":
+            vars[0]=pr_number
+            
+            for layer in model.layers:
+                if layer.name[0:2]=="pr":
+                    layer._name=pr_number
+        print("testing at " + str(vars) +"Target " +str(target), flush=True)
         #predict at the other pr numbers and save the data
         predict.predict(name,overwrite,model,y_plus,vars,target,normalize)
-
 
 
 

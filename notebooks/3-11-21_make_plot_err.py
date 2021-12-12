@@ -25,7 +25,7 @@ loss='mean_squared_error'
 var=['u_vel']
 target=['tau_wall']
 target_type='stress'
-normalize=False
+normalize=True
 model_names="lively-monkey-15"
 
 

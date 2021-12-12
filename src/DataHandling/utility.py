@@ -20,10 +20,6 @@ def get_runs_wandb():
     return name_list, config_list
 
 
-
-name_list, config_list = get_runs_wandb()
-
-
 def model_output_paths(model_name,y_plus,var,target,normalized):
     import os
     from DataHandling.features import slices

@@ -285,7 +285,13 @@ def heatmap_quarter(predctions,target_list,output_path,target):
     if target[0]=='tau_wall':
         cbar.ax.set_xlabel(r'$\tau_{w}^{+} $',rotation=0)
     elif target[0]=='pr0.71_flux':
-        cbar.ax.set_xlabel(r'$q_w^+,\quad Pr=0.71$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{Q}},\quad Pr=0.71$',rotation=0)
+    elif target[0]=='pr1_flux':
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{Q}},\quad Pr=1$',rotation=0)
+    elif target[0]=='pr0.2_flux':
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{Q}},\quad Pr=0.2$',rotation=0)
+    elif target[0]=='pr0.025_flux':
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{Q}},\quad Pr=0.025$',rotation=0)
     else: 
         raise Exception('target name is not defined')
 
@@ -317,10 +323,15 @@ def heatmap_quarter(predctions,target_list,output_path,target):
     if target[0]=='tau_wall':
         cbar.ax.set_xlabel(r'$\tau_{w}^{+} $',rotation=0)
     elif target[0]=='pr0.71_flux':
-        cbar.ax.set_xlabel(r'$q_w^+,\quad Pr=0.71$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{Q}},\quad Pr=0.71$',rotation=0)
+    elif target[0]=='pr1_flux':
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{Q}},\quad Pr=1$',rotation=0)
+    elif target[0]=='pr0.2_flux':
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{Q}},\quad Pr=0.2$',rotation=0)
+    elif target[0]=='pr0.025_flux':
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{Q}},\quad Pr=0.025$',rotation=0)
     else: 
         raise Exception('target name is not defined')
-
 
 
     fig2.savefig(os.path.join(output_path,'difference.pdf'),bbox_inches='tight',format='pdf')

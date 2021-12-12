@@ -5,11 +5,11 @@
 #SBATCH --time=0-00:45:00
 #SBATCH --mem=30gb
 #SBATCH --output=Array.%A_%a.log
-#SBATCH --array=0-14 #Set this to number of runs or index's of name_list
-#SBATCH -p q32g
-##SBATCH -p q64,q36,q24
-##SBATCH --begin=now+2hour
-#SBATCH --gres gpu
+#SBATCH --array=15 #Set this to number of runs or index's of name_list
+#SBATCH -p q64,q36,q24
+##SBATCH --begin=now+1hour
+##SBATCH -p q32g
+##SBATCH --gres gpu
 source /home/${USER}/.bashrc
 conda activate tf_gpu
 
@@ -23,5 +23,5 @@ conda activate tf_gpu
 #srun python3 -u /home/au643300/DataHandling/notebooks/10-11-21_heat_1vary.py
 echo This is task $SLURM_ARRAY_TASK_ID
 #srun python3 -u /home/au643300/DataHandling/notebooks/26-11-21_better_load_val.py
-#srun python3 -u /home/au643300/DataHandling/notebooks/26-11-21_plots_new_approch.py
-srun python3 -u /home/au643300/DataHandling/notebooks/08-12-21_test_at_other_pr.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/08-12-21_test_at_other_pr.py
+srun python3 -u /home/au643300/DataHandling/notebooks/26-11-21_plots_new_approch.py
