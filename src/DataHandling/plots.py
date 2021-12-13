@@ -26,7 +26,7 @@ def pdf_plots(error_fluc,names,output_path,target_type):
         cm =1/2.54
         fig, ax = plt.subplots(1, 1,figsize=(20*cm,20*cm),dpi=150)
         
-        sns.boxplot(data=error_fluc[i],showfliers = False,orient='h',ax=ax)
+        sns.boxplot(data=error_fluc[i]['Root sq. error of local fluctuations'],showfliers = False,orient='h',ax=ax)
         
         fig.savefig(os.path.join(output_path,names[i]+'_boxplot.pdf'),bbox_inches='tight',format='pdf')
         plt.clf()
@@ -42,17 +42,18 @@ def pdf_plots(error_fluc,names,output_path,target_type):
 
         sns.lineplot(x=x_grid, y=y_fluct, label='Root sq. error of local fluctuations',ax=ax)
         
-        if target_type=="flux":
-            y_local = KDEpy.FFTKDE(bw='ISJ', kernel='gaussian').fit(error_fluc[i]['Root sq. error of local heat flux'].to_numpy(), weights=None).evaluate(x_grid)
-            sns.lineplot(x=x_grid, y=y_local, label='Root sq. error of local heat flux',ax=ax)
-        else:
-            y_local = KDEpy.FFTKDE(bw='ISJ', kernel='gaussian').fit(error_fluc[i]['Root sq. error of local shear stress'].to_numpy(), weights=None).evaluate(x_grid)
-            sns.lineplot(x=x_grid, y=y_local, label='Root sq. error of local shear stress',ax=ax)
+        # if target_type=="flux":
+        #     y_local = KDEpy.FFTKDE(bw='ISJ', kernel='gaussian').fit(error_fluc[i]['Root sq. error of local heat flux'].to_numpy(), weights=None).evaluate(x_grid)
+        #     sns.lineplot(x=x_grid, y=y_local, label='Root sq. error of local heat flux',ax=ax)
+        # else:
+        #     y_local = KDEpy.FFTKDE(bw='ISJ', kernel='gaussian').fit(error_fluc[i]['Root sq. error of local shear stress'].to_numpy(), weights=None).evaluate(x_grid)
+        #     sns.lineplot(x=x_grid, y=y_local, label='Root sq. error of local shear stress',ax=ax)
         
         sns.despine()
 
         ax.fill_between(x_grid,y_fluct,alpha=0.8,color='grey')
-        ax.fill_between(x_grid,y_local,alpha=0.4,color='grey')
+        
+        #ax.fill_between(x_grid,y_local,alpha=0.4,color='grey')
         ax.set(xscale='log')
         #ax.set_xlim(1*10**(-4),10**3)
 
@@ -336,6 +337,7 @@ def heatmap_quarter(predctions,target_list,output_path,target):
 
     fig2.savefig(os.path.join(output_path,'difference.pdf'),bbox_inches='tight',format='pdf')
 
+    return None
 
 def heatmaps(target_list,names,predctions,output_path,model_path,target):
     """makes heatmaps of the Train validation and test data for target and prediction. Also plots the difference. Save to the output folder

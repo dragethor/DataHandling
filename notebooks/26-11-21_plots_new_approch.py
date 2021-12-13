@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 #importlib.reload(plots)
 
 overwrite=False
-overwrite_pics=False
+overwrite_pics=True
 
 
 path_of_output="/home/au643300/DataHandling/models/output"

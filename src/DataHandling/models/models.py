@@ -137,7 +137,6 @@ def baseline_cnn_multipel_inputs(input_features,activation='elu'):
 
 def baseline_cnn_sep_skip_final(input_features,activation='elu'):
     
-    activation='elu'
     from tensorflow import keras
     import tensorflow as tf
 
@@ -189,7 +188,6 @@ def baseline_cnn_sep_skip_final(input_features,activation='elu'):
 
 def baseline_cnn_no_BN(input_feature,activation='elu'):
     
-    activation='elu'
     from tensorflow import keras
     import tensorflow as tf
 
