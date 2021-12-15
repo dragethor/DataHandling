@@ -24,24 +24,33 @@ def pdf_plots(error_fluc,names,output_path,target_type):
     
     for i in range(3):
         cm =1/2.54
-        fig, ax = plt.subplots(1, 1,figsize=(20*cm,20*cm),dpi=150)
+        fig, ax = plt.subplots(1, 1,figsize=(15*cm,10*cm),dpi=100)
         
-        sns.boxplot(data=error_fluc[i]['Root sq. error of local fluctuations'],showfliers = False,orient='h',ax=ax)
         
+        
+
+        if target_type=="flux":
+            sns.boxplot(data=error_fluc[i]['Root sq. error of local heat flux'],showfliers = False,orient='h',ax=ax)
+        elif target_type=="stress":
+            sns.boxplot(data=error_fluc[i]['Root sq. error of local shear stress'],showfliers = False,orient='h',ax=ax)
+        
+        sns.despine()
         fig.savefig(os.path.join(output_path,names[i]+'_boxplot.pdf'),bbox_inches='tight',format='pdf')
         plt.clf()
+        
+        fig, ax = plt.subplots(1, 1,figsize=(15*cm,10*cm),dpi=100)
+        max_range_error=error_fluc[i].max().to_numpy().item()*1.1
+        min_range_error=error_fluc[i].min().to_numpy().item()*0.99
+        #Find coeffs to find the log equiv.
 
+        x_grid = np.linspace(min_range_error, max_range_error, num=int(max_range_error)*2)
+        y_fluct = KDEpy.FFTKDE(bw='ISJ', kernel='gaussian').fit(error_fluc[i].to_numpy(), weights=None).evaluate(x_grid)
         
-        fig, ax = plt.subplots(1, 1,figsize=(20*cm,20*cm),dpi=100)
-        max_range_error=np.max(error_fluc[i].max().to_numpy())
-        min_range_error=np.min(error_fluc[i].min().to_numpy())
-        x_grid = np.linspace(np.round(min_range_error-1), np.round(max_range_error+1), num=2*10**4)
-        y_fluct = KDEpy.FFTKDE(bw='ISJ', kernel='gaussian').fit(error_fluc[i]['Root sq. error of local fluctuations'].to_numpy(), weights=None).evaluate(x_grid)
-        
-        
+        if target_type=="flux":
+            sns.lineplot(x=x_grid, y=y_fluct, label='Root sq. error of local heat flux',ax=ax)
+        elif target_type=="stress":
+            sns.lineplot(x=x_grid, y=y_fluct, label='Root sq. error of local shear stress',ax=ax)
 
-        sns.lineplot(x=x_grid, y=y_fluct, label='Root sq. error of local fluctuations',ax=ax)
-        
         # if target_type=="flux":
         #     y_local = KDEpy.FFTKDE(bw='ISJ', kernel='gaussian').fit(error_fluc[i]['Root sq. error of local heat flux'].to_numpy(), weights=None).evaluate(x_grid)
         #     sns.lineplot(x=x_grid, y=y_local, label='Root sq. error of local heat flux',ax=ax)
@@ -92,9 +101,9 @@ def error(target_list,target_type,names,predctions,output_path):
 
         #Local erros for PDF's and boxplots etc.
         MSE_local_no_mean=np.sqrt(((predctions-target_list)**2)/np.mean(target_list)**2)*100
-        MSE_local_fluc_PDF=np.sqrt(((fluc_predict-fluc_target)**2)/(np.std(fluc_target))**2)*100
+        #MSE_local_fluc_PDF=np.sqrt(((fluc_predict-fluc_target)**2)/(np.std(fluc_target))**2)*100
         
-        return MSE_local_no_mean,global_mean_err,MSE_local_fluc_PDF,MSE_local_shear_stress,global_fluct_error,MSE_local_fluc
+        return MSE_local_no_mean,global_mean_err,MSE_local_shear_stress,global_fluct_error,MSE_local_fluc
 
 
     if not os.path.exists(output_path):
@@ -116,7 +125,7 @@ def error(target_list,target_type,names,predctions,output_path):
     for i in range(3):
         error_fluct=pd.DataFrame()
         
-        MSE_local_no_mean,global_mean_err,MSE_local_fluc_PDF,MSE_local_shear_stress,global_fluct_error,MSE_local_fluc=cal_func(target_list[i],predctions[i])
+        MSE_local_no_mean,global_mean_err,MSE_local_shear_stress,global_fluct_error,MSE_local_fluc=cal_func(target_list[i],predctions[i])
 
 
         if target_type=="stress":
@@ -126,7 +135,7 @@ def error(target_list,target_type,names,predctions,output_path):
             error_fluct['Root sq. error of local heat flux']=MSE_local_no_mean.flatten()
             error=error.append({'Global Mean Error':global_mean_err,'Root mean sq. error of local heat flux':MSE_local_shear_stress,'Global fluctuations error':global_fluct_error,'Root mean sq. error of local fluctuations':MSE_local_fluc},ignore_index=True)
         
-        error_fluct['Root sq. error of local fluctuations']=MSE_local_fluc_PDF.flatten()
+        #error_fluct['Root sq. error of local fluctuations']=MSE_local_fluc_PDF.flatten()
         #error_fluct['MAE local']=MAE_local_no_mean.flatten()
         #error_fluct['MAE fluct']=MAE_fluct_no_mean.flatten()
 

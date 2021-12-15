@@ -11,31 +11,21 @@ def predict(model_name,overwrite,model,y_plus,var,target,normalized):
     data_exist=False
 
     if not os.path.exists(output_path):
-
         os.makedirs(output_path)
 
     elif os.path.exists(os.path.join(output_path,'targets.npz')) and overwrite==False:
-
         data_exist=True
         print("Data exists and overwrite is set to false. Exiting")
 
     elif os.path.exists(os.path.join(output_path,'targets.npz')) and overwrite==True:
-
         print("deleting folder",flush=True)
         shutil.rmtree(output_path)
 
 
-
-
     if data_exist==False:
-
         data=slices.load_validation(y_plus,var,target,normalized)
-
-
         feature_list=[]
-
         target_list=[]
-
 
         for data_type in data:
 
@@ -43,9 +33,7 @@ def predict(model_name,overwrite,model,y_plus,var,target,normalized):
 
             target_list.append(data_type[1].numpy())
 
-
         predctions=[]
-
 
         predctions.append(model.predict(feature_list[0]))
         predctions.append(model.predict(feature_list[1]))

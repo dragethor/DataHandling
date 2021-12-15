@@ -16,7 +16,7 @@ import shutil
 import pandas as pd
 import matplotlib.pyplot as plt
 
-#importlib.reload(plots)
+
 
 overwrite=False
 overwrite_pics=True
@@ -32,7 +32,8 @@ slurm_arrary_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
 
 model=name_list[slurm_arrary_id]
-#model=name_list[0]
+#importlib.reload(plots)
+#model=name_list[-1]
 
 full_dir=os.path.join(path_of_output,model)
 subdirs=os.listdir(full_dir)
@@ -74,7 +75,6 @@ for dir in subdirs:
             shutil.copy2(prediction_path,prediction_scratch)
             shutil.copy2(target_path,target_scratch)
             
-
             pred=np.load(prediction_scratch)
             targ=np.load(target_scratch)
         except BadZipfile:
@@ -123,42 +123,4 @@ for dir in subdirs:
 
         print("done with " +model,flush=True)
 
-
-
-#%%
-import seaborn as sns
-import KDEpy
-
-
-
-#Root sq. error of local heat flux
-#'Root sq. error of local fluctuations'
-
-# x_grid = np.linspace(1*10**-7, 1600, num=3**10)
-# y_fluct = KDEpy.FFTKDE(bw='ISJ', kernel='gaussian').fit(val['Root sq. error of local fluctuations'].to_numpy(), weights=None).evaluate(x_grid)
-# y_local = KDEpy.FFTKDE(bw='ISJ', kernel='gaussian').fit(val['Root sq. error of local heat flux'].to_numpy(), weights=None).evaluate(x_grid)
-
-# #%%
-
-# sns.set_theme()
-# sns.set_context("paper")
-# sns.set_style("ticks")
-
-# f, ax = plt.subplots()
-# #ax.set(xscale='log')
-
-
-# sns.lineplot(x=x_grid, y=y_fluct, label='Root sq. error of local fluctuations',ax=ax)
-# sns.lineplot(x=x_grid, y=y_local, label='Root sq. error of local heat flux',ax=ax)
-
-# sns.despine()
-# ax.set(xscale='log')
-# ax.set_xlim(1*10**(-4),10**3)
-
-# plt.fill_between(x_grid,y_fluct,alpha=0.8,color='grey')
-# plt.fill_between(x_grid,y_local,alpha=0.4,color='grey')
-# # plt.legend()
-
-# # plt.show()
-# # #plt.savefig("plot",bbox_inches="tight")
 
