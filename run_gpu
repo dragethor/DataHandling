@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=ML_train
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task 2
-#SBATCH --mincpus=2
-#SBATCH --time=0-18:00:00
-#SBATCH --mem=10gb
+#SBATCH --cpus-per-task 4
+#SBATCH --mincpus=4
+#SBATCH --time=0-20:00:00
+#SBATCH --mem=15gb
 #SBATCH -p q32g
 #SBATCH --gres gpu
 
@@ -24,4 +24,6 @@ conda activate tf_gpu
 #srun python3 -u /home/au643300/DataHandling/notebooks/19-11-21_fukiama_model_all_vels.py
 #srun python3 -u /home/au643300/DataHandling/notebooks/23-11-21_fukiama_model_bigger_network.py
 #srun python3 -u /home/au643300/DataHandling/notebooks/25-11-21_heat_all_vels_plus_pr.py
-srun python3 -u /home/au643300/DataHandling/notebooks/06-12-21_final_model_all_vels_and_heat.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/06-12-21_final_model_all_vels_and_heat.py
+#srun python3 -u /home/au643300/DataHandling/notebooks/16-12-21_final_model_no_sep.py
+srun python3 -u /home/au643300/DataHandling/notebooks/16-12-21_super_deep.py

@@ -33,7 +33,7 @@ slurm_arrary_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
 model=name_list[slurm_arrary_id]
 #importlib.reload(plots)
-#model=name_list[-1]
+#model=name_list[-4]
 
 full_dir=os.path.join(path_of_output,model)
 subdirs=os.listdir(full_dir)

@@ -63,8 +63,8 @@ def pdf_plots(error_fluc,names,output_path,target_type):
         ax.fill_between(x_grid,y_fluct,alpha=0.8,color='grey')
         
         #ax.fill_between(x_grid,y_local,alpha=0.4,color='grey')
-        ax.set(xscale='log')
-        #ax.set_xlim(1*10**(-4),10**3)
+        #ax.set(xscale='log')
+        ax.set_xlim(-1,100)
 
         fig.savefig(os.path.join(output_path,names[i]+'_PDF.png'),bbox_inches='tight')
         plt.clf()
@@ -313,7 +313,7 @@ def heatmap_quarter(predctions,target_list,output_path,target):
 
     fig2, axs=plt.subplots(1,3,figsize=([21*cm,10*cm]),sharex=True,sharey=True,constrained_layout=False,dpi=300)
     for i in range(3):
-        pcm=axs[i].imshow(target_list[i]-predctions[i],cmap="Spectral",vmin=min_diff,vmax=max_diff,aspect=0.5)
+        pcm=axs[i].imshow(np.transpose(target_list[i]-predctions[i]),cmap="Spectral",vmin=min_diff,vmax=max_diff,aspect=0.5)
         axs[i].set_xlabel(r'$x^+$')
         axs[0].set_ylabel(r'$z^+$')
         axs[i].set_title(names[i].capitalize(),weight="bold")
