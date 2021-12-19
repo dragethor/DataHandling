@@ -100,3 +100,7 @@ Error_fluct_*
 # Mypy cache
 .mypy_cache/
 data
+
+
+#Vivid-sun-70 as it is too big to sync
+*/output/vivid-sun-70/

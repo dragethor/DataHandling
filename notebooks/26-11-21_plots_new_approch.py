@@ -33,7 +33,7 @@ slurm_arrary_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
 model=name_list[slurm_arrary_id]
 #importlib.reload(plots)
-#model=name_list[-4]
+#model=name_list[5]
 
 full_dir=os.path.join(path_of_output,model)
 subdirs=os.listdir(full_dir)
@@ -114,11 +114,17 @@ for dir in subdirs:
             
             if os.path.exists(os.path.join(output_path,"target_prediction.pdf")):
                 if overwrite==True or overwrite_pics==True:
+                    if target[0]=="pr0.71_flux":
+                        plots.heatmap_quarter(predctions,target_list,output_path,target)
+                    else:
+                        plots.heatmap_quarter_test(predctions[0],target_list[0],output_path,target)
+                else:
+                    print('heatmaps allready exist and overwrite is false',flush=True)        
+            else:
+                if target[0]=="pr0.71_flux":
                     plots.heatmap_quarter(predctions,target_list,output_path,target)
                 else:
-                    print('heatmaps allready exist and overwrite is false',flush=True) 
-            else:
-                plots.heatmap_quarter(predctions,target_list,output_path,target)
+                    plots.heatmap_quarter_test(predctions[0],target_list[0],output_path,target)
 
 
         print("done with " +model,flush=True)
