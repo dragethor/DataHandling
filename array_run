@@ -2,10 +2,10 @@
 #SBATCH --job-name=test_other_pr
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
-#SBATCH --time=0-00:15:00
+#SBATCH --time=0-00:45:00
 #SBATCH --mem=20gb
 #SBATCH --output=Array.%A_%a.log
-#SBATCH --array=0-15 #Set this to number of runs or index's of name_list
+#SBATCH --array=0-20 #Set this to number of runs or index's of name_list
 #SBATCH -p q64,q36,q24
 ##SBATCH --begin=now+1hour
 ##SBATCH -p q32g

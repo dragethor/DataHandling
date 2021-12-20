@@ -29,7 +29,7 @@ print("This is " + name,flush=True)
 
 #%%
 
-pr_numbers=['pr0.025',"pr0.2","pr1"]
+pr_numbers=["pr0.2",'pr0.025',"pr1"]
 
 if config['target']=="pr0.71_flux":
     
@@ -42,8 +42,8 @@ if config['target']=="pr0.71_flux":
     model=keras.models.load_model(model_path)
     
     #Predict for standart config as well
-    print("testing at " + str(vars) +"Target " +str(target), flush=True)
-    predict.predict(name,overwrite,model,y_plus,vars,target,normalize)
+    #print("testing at " + str(vars) +"Target " +str(target), flush=True)
+    #predict.predict(name,overwrite,model,y_plus,vars,target,normalize)
 
 
     #now change the target and vars to other pr

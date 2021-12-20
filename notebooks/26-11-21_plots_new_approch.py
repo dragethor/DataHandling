@@ -33,7 +33,7 @@ slurm_arrary_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
 model=name_list[slurm_arrary_id]
 #importlib.reload(plots)
-#model=name_list[5]
+#model=name_list[-4]
 
 full_dir=os.path.join(path_of_output,model)
 subdirs=os.listdir(full_dir)
@@ -99,7 +99,7 @@ for dir in subdirs:
                 del error_fluc,err
 
 
-            if os.path.exists(os.path.join(output_path,"test_PDF.pdf")):
+            if os.path.exists(os.path.join(output_path,"test_PDF.png")):
                 if overwrite==True or overwrite_pics==True:
                     train=pd.read_parquet(os.path.join(output_path,'Error_fluct_train.parquet'))
                     val=pd.read_parquet(os.path.join(output_path,'Error_fluct_validation.parquet'))
@@ -116,6 +116,8 @@ for dir in subdirs:
                 if overwrite==True or overwrite_pics==True:
                     if target[0]=="pr0.71_flux":
                         plots.heatmap_quarter(predctions,target_list,output_path,target)
+                    elif target[0]=="tau_wall":
+                        plots.heatmap_quarter(predctions,target_list,output_path,target)
                     else:
                         plots.heatmap_quarter_test(predctions[0],target_list[0],output_path,target)
                 else:
@@ -123,10 +125,19 @@ for dir in subdirs:
             else:
                 if target[0]=="pr0.71_flux":
                     plots.heatmap_quarter(predctions,target_list,output_path,target)
+                elif target[0]=="tau_wall":
+                    plots.heatmap_quarter(predctions,target_list,output_path,target)
                 else:
                     plots.heatmap_quarter_test(predctions[0],target_list[0],output_path,target)
 
-
+        plt.close('all')
         print("done with " +model,flush=True)
+
+
+#%%
+
+#output_path
+#importlib.reload(plots)
+#plots.heatmap_quarter_test(predctions[0],target_list[0],output_path,target)
 
 

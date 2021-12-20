@@ -250,12 +250,12 @@ def heatmap_quarter_test(predction,target_var,output_path,target):
     fig, axs=plt.subplots(2,figsize=([7*cm,10*cm]),sharex=True,sharey=True,constrained_layout=False,dpi=1000)
 
     #Target
-    pcm=axs[0].imshow(np.transpose(target_var),cmap='viridis',vmin=min_tot,vmax=max_tot,aspect=0.5)
+    pcm=axs[0].imshow(np.transpose(target_var),cmap='viridis',vmin=min_tot,vmax=max_tot,aspect=0.5,interpolation='bicubic')
     axs[0].set_title(name.capitalize(),weight="bold")
     axs[0].set_ylabel(r'$z^+$')
     
     #prediction
-    axs[1].imshow(np.transpose(predction),cmap='viridis',vmin=min_tot,vmax=max_tot,aspect=0.5)
+    axs[1].imshow(np.transpose(predction),cmap='viridis',vmin=min_tot,vmax=max_tot,aspect=0.5,interpolation='bicubic')
     axs[1].set_xlabel(r'$x^+$')
     axs[1].set_ylabel(r'$z^+$')
 
@@ -304,7 +304,7 @@ def heatmap_quarter_test(predction,target_var,output_path,target):
 
     fig2, ax=plt.subplots(1,figsize=([7*cm,10*cm]),sharex=True,sharey=True,constrained_layout=False,dpi=1000)
 
-    pcm=ax.imshow(np.transpose(target_var-predction),cmap="Spectral",vmin=min_diff,vmax=max_diff,aspect=0.5)
+    pcm=ax.imshow(np.transpose(target_var-predction),cmap="Spectral",vmin=min_diff,vmax=max_diff,aspect=0.5,interpolation='bicubic')
     ax.set_xlabel(r'$x^+$')
     ax.set_ylabel(r'$z^+$')
     ax.set_title("difference".capitalize(),weight="bold")
