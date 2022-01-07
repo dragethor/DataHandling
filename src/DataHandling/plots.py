@@ -1,5 +1,76 @@
 
+def threeD_plot(error_val,output_path):
+    import numpy as np
+    import os
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    
+    #change the scale to plus units
+    Re_Tau = 395 #Direct from simulation
+    Re = 10400 #Direct from simulation
+    nu = 1/Re #Kinematic viscosity
+    u_tau = Re_Tau*nu
 
+
+    train_numpy=error_val.to_numpy()
+    num_snapshots=int(train_numpy.shape[0]/256/256)
+    reshape_t=train_numpy.reshape((num_snapshots,256,256))
+    avg=np.mean(reshape_t,0)
+
+    # Create meshgrid
+    xx, yy = np.mgrid[0:256:256j, 0:256:256j]
+
+
+    x_range=12
+    z_range=6
+
+    gridpoints_x=int(255)+1
+    gridponts_z=int(255)+1
+
+
+    x_plus_max=x_range*u_tau/nu
+    z_plus_max=z_range*u_tau/nu
+
+
+    x_plus_max=np.round(x_plus_max).astype(int)
+    z_plus_max=np.round(z_plus_max).astype(int)
+
+    axis_range_x=np.array([0,950,1900,2850,3980,4740])
+    axis_range_z=np.array([0,470,950,1420,1900,2370])
+
+
+    placement_x=axis_range_x*nu/u_tau
+    placement_x=np.round((placement_x-0)/(x_range-0)*(gridpoints_x-0)).astype(int)
+
+
+    placement_z=axis_range_z*nu/u_tau
+    placement_z=np.round((placement_z-0)/(z_range-0)*(gridponts_z-0)).astype(int)
+
+
+
+
+    cm =1/2.54
+    fig = plt.figure(figsize=(15*cm,10*cm),dpi=200)
+    ax = plt.axes(projection='3d')
+    surf = ax.plot_surface(xx, yy, np.transpose(avg), cmap='viridis', edgecolor='none')
+    ax.set_xlabel(r'$x^+$')
+    ax.set_ylabel(r'$z^+$')
+    ax.set_zlabel(r'Error $\%$')
+    ax.set_box_aspect((2,1,1))
+
+    ax.set_xticks(placement_x)
+    ax.set_xticklabels(axis_range_x)
+    ax.set_xticks(placement_x)
+    ax.set_xticklabels(axis_range_x)
+
+    ax.set_yticks(placement_z)
+    ax.set_yticklabels(axis_range_z)
+    fig.colorbar(surf, shrink=0.3, aspect=5) # add color bar indicating the PDF
+    ax.view_init(30, 140)
+    
+    fig.savefig(os.path.join(output_path,'validation_3D.pdf'),bbox_inches='tight')
+
+    return None
 
 def pdf_plots(error_fluc,names,output_path,target_type):
     """Makes both boxplot and pdf plot for the errors.
@@ -284,13 +355,13 @@ def heatmap_quarter_test(predction,target_var,output_path,target):
     if target[0]=='tau_wall':
         cbar.ax.set_xlabel(r'$\tau_{w}^{+} $',rotation=0)
     elif target[0]=='pr0.71_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=0.71$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=0.71$',rotation=0)
     elif target[0]=='pr1_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=1$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=1$',rotation=0)
     elif target[0]=='pr0.2_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=0.2$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=0.2$',rotation=0)
     elif target[0]=='pr0.025_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=0.025$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=0.025$',rotation=0)
     else: 
         raise Exception('target name is not defined')
 
@@ -321,13 +392,13 @@ def heatmap_quarter_test(predction,target_var,output_path,target):
     if target[0]=='tau_wall':
         cbar.ax.set_xlabel(r'$\tau_{w}^{+} $',rotation=0)
     elif target[0]=='pr0.71_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=0.71$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=0.71$',rotation=0)
     elif target[0]=='pr1_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=1$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=1$',rotation=0)
     elif target[0]=='pr0.2_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=0.2$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=0.2$',rotation=0)
     elif target[0]=='pr0.025_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=0.025$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=0.025$',rotation=0)
     else: 
         raise Exception('target name is not defined')
 
@@ -480,13 +551,13 @@ def heatmap_quarter(predctions,target_list,output_path,target):
     if target[0]=='tau_wall':
         cbar.ax.set_xlabel(r'$\tau_{w}^{+} $',rotation=0)
     elif target[0]=='pr0.71_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=0.71$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=0.71$',rotation=0)
     elif target[0]=='pr1_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=1$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=1$',rotation=0)
     elif target[0]=='pr0.2_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=0.2$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=0.2$',rotation=0)
     elif target[0]=='pr0.025_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=0.025$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=0.025$',rotation=0)
     else: 
         raise Exception('target name is not defined')
 
@@ -518,13 +589,13 @@ def heatmap_quarter(predctions,target_list,output_path,target):
     if target[0]=='tau_wall':
         cbar.ax.set_xlabel(r'$\tau_{w}^{+} $',rotation=0)
     elif target[0]=='pr0.71_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=0.71$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=0.71$',rotation=0)
     elif target[0]=='pr1_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=1$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=1$',rotation=0)
     elif target[0]=='pr0.2_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=0.2$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=0.2$',rotation=0)
     elif target[0]=='pr0.025_flux':
-        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q}},\quad Pr=0.025$',rotation=0)
+        cbar.ax.set_xlabel(r'$\frac{q_w}{\overline{q_{w,DNS}}},\quad Pr=0.025$',rotation=0)
     else: 
         raise Exception('target name is not defined')
 

@@ -19,8 +19,8 @@ import matplotlib.pyplot as plt
 
 
 overwrite=False
-overwrite_pics=True
-
+overwrite_pics=False
+overwrite_pdf=True
 
 path_of_output="/home/au643300/DataHandling/models/output"
 name_list, _ = utility.get_runs_wandb()
@@ -100,16 +100,18 @@ for dir in subdirs:
 
 
             if os.path.exists(os.path.join(output_path,"test_PDF.png")):
-                if overwrite==True or overwrite_pics==True:
+                if overwrite==True or overwrite_pics==True or overwrite_pdf==True:
                     train=pd.read_parquet(os.path.join(output_path,'Error_fluct_train.parquet'))
                     val=pd.read_parquet(os.path.join(output_path,'Error_fluct_validation.parquet'))
                     test=pd.read_parquet(os.path.join(output_path,'Error_fluct_test.parquet'))
                     plots.pdf_plots([train,val,test],names,output_path,target_type)
+                    plots.threeD_plot(val,output_path)
             else:
                 train=pd.read_parquet(os.path.join(output_path,'Error_fluct_train.parquet'))
                 val=pd.read_parquet(os.path.join(output_path,'Error_fluct_validation.parquet'))
                 test=pd.read_parquet(os.path.join(output_path,'Error_fluct_test.parquet'))
                 plots.pdf_plots([train,val,test],names,output_path,target_type)
+                plots.threeD_plot(val,output_path)
 
             
             if os.path.exists(os.path.join(output_path,"target_prediction.pdf")):
