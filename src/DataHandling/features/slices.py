@@ -1,11 +1,11 @@
 
 
 
-import tensorflow as tf
 
 
 def feature_description(save_loc):
-    """Loads the json file descriping the file format for parsing the tfRecords
+    """Loads the json file descriping the file format for parsing the tfRecords. For now only array_serial has been implemented!
+       Furthermore the last entry is allways the target.
 
     Args:
         save_loc (string): The file path to the folder where the data is saved
@@ -48,6 +48,7 @@ def read_tfrecords(serial_data,format,target):
 
     dict_for_dataset={}
 
+    #Loops through the features and saves them into a dict
     for key, value in features.items():
         if value.dtype == tf.string:
             dict_for_dataset[key]=tf.io.parse_tensor(value,tf.float64)
@@ -56,6 +57,8 @@ def read_tfrecords(serial_data,format,target):
     
 
     target_array=dict_for_dataset[target[0]]
+
+    #Removes the target from the dict
     dict_for_dataset.pop(target[0])
 
      
@@ -118,6 +121,20 @@ def load_from_scratch(y_plus,var,target,normalized,repeat=10,shuffle_size=100,ba
 
 
 def load_validation(y_plus,var,target,normalized):
+    """A load function where the validation, test and train are loaded as one giant batch
+
+    Args:
+        y_plus (int): At what y_plus value
+        var (list): the variables used as input
+        target (list): list of target. So far can only hold one entry
+        normalized (Bool): If the data is normalized or not
+
+    Raises:
+        Exception: If the data does not exist a exception is raised
+
+    Returns:
+        list: list containing the data in the following order [train,validation,test]
+    """
 
       
     import tensorflow as tf

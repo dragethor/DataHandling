@@ -1,6 +1,11 @@
 
 
 
+
+""" 
+Samler alle pdf og png filer fra models/output i figures mappen for nemmere at opdatere latex dokument
+"""
+
 #%%
 
 import glob

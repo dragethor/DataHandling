@@ -1,4 +1,15 @@
 def predict(model_name,overwrite,model,y_plus,var,target,normalized):
+    """Uses a trained model to predict with
+
+    Args:
+        model_name (str): the namen given to the model by Wandb
+        overwrite (Bool): Overwrite existing data or not
+        model (object): the loaded model
+        y_plus (int): y_plus value
+        var (list): the variabels used as input
+        target (list): list of target
+        normalized (Bool): If the model uses normalized data
+    """
     import os
     from DataHandling import utility
     from DataHandling.features import slices

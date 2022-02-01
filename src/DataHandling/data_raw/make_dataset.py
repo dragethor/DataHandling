@@ -1,5 +1,13 @@
 
 def append_tozarr(store="/home/au643300/DataHandling/data/interim/data.zarr"):
+    """appends new u files or creates a new zarr  array
+
+    Args:
+        store (Path, optional): where to put the zarr array. Defaults to "/home/au643300/DataHandling/data/interim/data.zarr".
+
+    Returns:
+        None: 
+    """
     import glob
     import os
     import numpy as np
@@ -50,7 +58,7 @@ def append_tozarr(store="/home/au643300/DataHandling/data/interim/data.zarr"):
 
 
 def netcdf_save(interim="/home/au643300/NOBACKUP/data/interim/snapshots/"):
-    """Saves .u files to netcdf files
+    """LEGACY Saves .u files to netcdf files
 
     Args:
         interim (str, optional): the default save location. Defaults to "/home/au643300/NOBACKUP/data/interim/snapshots/".

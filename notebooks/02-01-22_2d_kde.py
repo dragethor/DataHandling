@@ -1,5 +1,12 @@
 
 #%%
+
+
+
+
+""" Det her er et ufærdigt script som jeg har brugt til at tjekke error rumligt. Alt det som ikke er i en func er taget direkte fra plots_new_approch """
+
+
 import os
 import matplotlib
 import importlib

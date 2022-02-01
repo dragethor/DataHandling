@@ -1,9 +1,17 @@
 
 
 #%%
+
+""" Det her script kører igemmen alle modeller fra Wandb af i SlURM array mode.
+    Ud fra modelnavnet finder den frem til hvor modellen er gemt og hvor dens data ligger i models/output. Hvis der ikke findes en paraquet fil med error
+    data generes dette, og ellers springer den over(vedmindre overwrite er sat til true). Derefter generes billeder
+"""
+
 import os
 import matplotlib
 import importlib
+
+#Fjern den her hvis der skal køres interaktivt. Skal bruges for at kunne lave billeder i batch mode
 matplotlib.use('Agg')
 
 

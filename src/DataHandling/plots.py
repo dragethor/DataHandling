@@ -1,5 +1,14 @@
 
 def threeD_plot(error_val,output_path):
+    """3d KDE of the errors
+
+    Args:
+        error_val (numpy array): the errors
+        output_path (Path): where to save
+
+    Returns:
+        None: 
+    """
     import numpy as np
     import os
     import pandas as pd
@@ -144,6 +153,9 @@ def pdf_plots(error_fluc,names,output_path,target_type):
 
 
 def error(target_list,target_type,names,predctions,output_path):
+    
+    
+
     import os
     import numpy as np
     import pandas as pd

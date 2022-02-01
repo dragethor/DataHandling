@@ -2,6 +2,11 @@
 
 #%%
 
+
+""" Bruges til at lave nye slices af dataen """
+
+
+
 from DataHandling.features import slices
 import xarray as xr
 

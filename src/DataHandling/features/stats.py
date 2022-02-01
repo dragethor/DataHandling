@@ -6,6 +6,15 @@ def custom_optimize(dsk, keys):
     return dask.array.optimization.optimize(dsk, keys)
 
 def get_valdata(quantity):
+    """Returns the data used for validation
+
+    Args:
+        quantity ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+
     import pandas as pd
     import numpy as np
 

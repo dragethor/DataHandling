@@ -1,4 +1,16 @@
 
+
+
+
+
+
+""" 
+Et script som tester alle modeller fra wandb ved andre Pr tal hvis de er lavet til at forudsige Pr.
+Den skal bruges sammen med array_run batch scriptet
+"""
+
+
+
 #%%
 
 from DataHandling.features import slices
@@ -12,6 +24,8 @@ name_list, config_list = utility.get_runs_wandb()
 
 overwrite=False
 
+
+#Bruges for at køre forskellige modeller samtidigt via SLURM arrays. Bruges sammen med array_run batch filen
 slurm_arrary_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
 
